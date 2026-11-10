@@ -15,7 +15,7 @@ Aplikasi ini dibangun berdasarkan dokumen konteks produk **WebCode Lab — Ranca
 
 ## Fitur (produksi)
 
-- **Auth**: Supabase Auth (email + password), dua akun demo, pendaftaran publik dinonaktifkan.
+- **Auth**: Supabase Auth (email + password), dua akun demo, pendaftaran publik dinonaktifkan. Dosen dapat membuat akun mahasiswa baru dari halaman Mahasiswa melalui Edge Function `create-student` (service role hanya di server).
 - **Materi & latihan**: modul → pelajaran → latihan; penilaian kode server-side via Edge Function `submit-exercise` dengan validasi HTML/CSS (selector, teks, properti warna) + pencatatan XP.
 - **AI**: Edge Functions `ai-hint` & `ai-error-explanation` memakai Claude API (server-side only) dengan rate limit; fallback ke hint latihan saat AI belum dikonfigurasi.
 - **Kuis**: RPC `start_quiz_attempt` / `submit_quiz_attempt`; jawaban dihitung server-side, kunci jawaban hanya dibawa mahasiswa lewat RPC.
@@ -30,7 +30,7 @@ Aplikasi ini dibangun berdasarkan dokumen konteks produk **WebCode Lab — Ranca
 supabase/
   config.toml
   migrations/        # schema, RLS, domain functions, seed demo content
-  functions/         # _shared + submit-exercise, ai-hint, ai-error-explanation
+  functions/         # _shared + submit-exercise, create-student, ai-hint, ai-error-explanation
 src/
   features/          # modul, dashboard, quizzes, projects, forum, lecturer, exercises
   lib/               # supabase client, database types, format, errors, queryClient
@@ -89,7 +89,7 @@ npm run functions:serve
 
 - Row Level Security aktif di semua tabel publik; akses lewat RPC `SECURITY DEFINER` yang sudah divalidasi.
 - Quiz kunci jawaban hanya dibagikan lewat RPC `start_quiz_attempt` / `submit_quiz_attempt` (server-side grading).
-- Edge Functions memakai auth user JWT + service role server-side; rate limit AI (mis. 20 request / 60 menit untuk hint).
+- Edge Functions memakai auth user JWT + service role server-side; rate limit AI (mis. 20 request / 60 menit untuk hint). Pembuatan akun mahasiswa (`create-student`) memverifikasi role dosen sebelum memakai service role.
 - Validasi kode latihan dijalankan di Edge Function, bukan di browser.
 
 ## Status

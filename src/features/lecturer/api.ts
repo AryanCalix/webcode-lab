@@ -12,8 +12,25 @@ import type {
   StudentProgressRow,
 } from '../../lib/database.types';
 import { throwIfError } from '../../lib/errors';
+import { invokeFunction } from '../../lib/edge';
 import { isStreakCurrent } from '../../lib/format';
 import { getSupabase } from '../../lib/supabase';
+
+export interface CreateStudentInput {
+  fullName: string;
+  email: string;
+  password: string;
+}
+
+export interface CreatedStudent {
+  id: string;
+  email: string;
+  fullName: string;
+}
+
+export function createStudent(input: CreateStudentInput): Promise<CreatedStudent> {
+  return invokeFunction<CreatedStudent>('create-student', { ...input });
+}
 
 export interface StudentOverview {
   id: string;

@@ -14,7 +14,7 @@ const languageMeta: Record<
   }
 > = {
   html: {
-    name: 'HTML5',
+    name: 'HTML',
     wordmark: 'HTML',
     base: 'bg-[#1a0b05]',
     glowStrong: 'bg-[#f97316]/60',
@@ -24,7 +24,7 @@ const languageMeta: Record<
     snippet: '<h1>Halo, Web!</h1>',
   },
   css: {
-    name: 'CSS3',
+    name: 'CSS',
     wordmark: 'CSS',
     base: 'bg-[#050917]',
     glowStrong: 'bg-[#264de4]/60',

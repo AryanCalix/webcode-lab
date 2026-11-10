@@ -342,7 +342,7 @@ export default function LecturerResultsPage() {
 
               return (
                 <ProjectGradeCard
-                  key={`${submission.id}-${submission.score ?? 'none'}`}
+                  key={submission.id}
                   submission={submission}
                   studentName={student?.full_name ?? 'Pengguna'}
                   projectTitle={project?.title ?? 'Proyek tidak ditemukan'}

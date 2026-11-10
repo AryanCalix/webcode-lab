@@ -1,20 +1,138 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Plus, Search, X } from 'lucide-react';
 import { Avatar } from '../../components/Avatar';
 import { PageHeader } from '../../components/PageHeader';
-import { Badge, Card, EmptyState, ErrorState, LoadingState, ProgressBar } from '../../components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  Field,
+  LoadingState,
+  ProgressBar,
+  inputClassName,
+} from '../../components/ui';
 import { summariseAttendance, useAttendanceData } from '../../features/attendance/hooks';
 import { summariseStudentGrade } from '../../features/grading/summary';
-import { useLecturerResults, useStudentsOverview } from '../../features/lecturer/hooks';
+import {
+  useCreateStudent,
+  useLecturerResults,
+  useStudentsOverview,
+} from '../../features/lecturer/hooks';
 import { getErrorMessage } from '../../lib/errors';
 import { gradeTone } from '../../lib/grading';
+
+function CreateStudentDialog({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (fullName: string) => void;
+}) {
+  const createStudent = useCreateStudent();
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    createStudent.mutate(
+      { fullName: fullName.trim(), email: email.trim(), password },
+      {
+        onSuccess: (student) => onCreated(student.fullName),
+        onError: (mutationError) => setError(getErrorMessage(mutationError)),
+      },
+    );
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-student-title"
+    >
+      <Card className="w-full max-w-md p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="create-student-title" className="text-lg font-semibold text-slate-900">
+              Tambah Mahasiswa
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Akun mahasiswa langsung aktif dan dapat masuk dengan email serta password ini.
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Tutup form tambah mahasiswa">
+            <X className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-5 grid gap-4">
+          <Field label="Nama lengkap" htmlFor="student-full-name">
+            <input
+              id="student-full-name"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+              className={inputClassName}
+              placeholder="Contoh: Budi Santoso"
+              required
+              minLength={2}
+              maxLength={120}
+            />
+          </Field>
+          <Field label="Email" htmlFor="student-email">
+            <input
+              id="student-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className={inputClassName}
+              placeholder="nama@webcode.lab"
+              required
+            />
+          </Field>
+          <Field label="Password awal" htmlFor="student-password">
+            <input
+              id="student-password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className={inputClassName}
+              placeholder="Minimal 8 karakter"
+              required
+              minLength={8}
+              maxLength={72}
+            />
+          </Field>
+
+          {error ? <Alert tone="error">{error}</Alert> : null}
+
+          <div className="mt-1 flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={createStudent.isPending}>
+              {createStudent.isPending ? 'Menyimpan…' : 'Tambah Mahasiswa'}
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
+  );
+}
 
 export default function StudentsPage() {
   const studentsQuery = useStudentsOverview();
   const resultsQuery = useLecturerResults();
   const attendance = useAttendanceData();
   const [search, setSearch] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+  const [createdName, setCreatedName] = useState<string | null>(null);
 
   const isLoading = studentsQuery.isLoading || resultsQuery.isLoading || attendance.isLoading;
   const error = studentsQuery.error ?? resultsQuery.error ?? attendance.error;
@@ -93,7 +211,31 @@ export default function StudentsPage() {
         eyebrow="Kelas Pemrograman Web"
         title="Mahasiswa"
         description="Ringkasan progres, kehadiran, dan nilai akhir seluruh mahasiswa. Klik detail untuk melihat riwayat lengkap."
+        action={
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Tambah Mahasiswa
+          </Button>
+        }
       />
+
+      {createdName ? (
+        <div className="mb-4">
+          <Alert tone="success">
+            Akun mahasiswa {createdName} berhasil dibuat.
+          </Alert>
+        </div>
+      ) : null}
+
+      {showCreate ? (
+        <CreateStudentDialog
+          onClose={() => setShowCreate(false)}
+          onCreated={(fullName) => {
+            setCreatedName(fullName);
+            setShowCreate(false);
+          }}
+        />
+      ) : null}
 
       <div className="mb-4 flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-sm">
         <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />

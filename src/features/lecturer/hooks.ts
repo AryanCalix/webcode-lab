@@ -5,6 +5,7 @@ import { moduleKeys } from '../modules/hooks';
 import { quizKeys } from '../quizzes/hooks';
 import { lecturerKeys } from './keys';
 import {
+  createStudent,
   deleteLesson,
   deleteModule,
   fetchAllLessons,
@@ -26,6 +27,19 @@ export { lecturerKeys };
 
 export function useStudentsOverview() {
   return useQuery({ queryKey: lecturerKeys.students(), queryFn: fetchStudentsOverview });
+}
+
+export function useCreateStudent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { fullName: string; email: string; password: string }) =>
+      createStudent(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: lecturerKeys.students() });
+      void queryClient.invalidateQueries({ queryKey: lecturerKeys.results() });
+    },
+  });
 }
 
 export function useAllModules() {

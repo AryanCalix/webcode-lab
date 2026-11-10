@@ -334,6 +334,13 @@ export default function LessonEditorPage() {
   const module = (modulesQuery.data ?? []).find((item) => item.id === moduleId);
   if (!module) return <Navigate to="/lecturer/modules" replace />;
 
+  // order_index is 1-based; appending must follow the highest existing value so
+  // the first lesson in an empty module still reads as "Urutan 1".
+  const nextOrder = (lessonsQuery.data ?? []).reduce(
+    (max, lesson) => Math.max(max, lesson.order_index),
+    0,
+  ) + 1;
+
   return (
     <div className="mx-auto max-w-4xl">
       <Link
@@ -356,7 +363,7 @@ export default function LessonEditorPage() {
         lesson={lesson}
         exercise={exercise}
         moduleId={module.id}
-        defaultOrder={(lessonsQuery.data ?? []).length + 1}
+        defaultOrder={nextOrder}
         onSaved={() => navigate(`/lecturer/modules/${module.id}`)}
       />
     </div>

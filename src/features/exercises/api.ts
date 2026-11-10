@@ -1,5 +1,4 @@
-import type { FunctionsHttpError } from '@supabase/supabase-js';
-import { getSupabase } from '../../lib/supabase';
+import { invokeFunction } from '../../lib/edge';
 
 export interface ExerciseSubmissionResult {
   id: string;
@@ -19,38 +18,13 @@ export interface AiExplanationResult {
   source: 'ai' | 'fallback';
 }
 
-async function readFunctionError(error: FunctionsHttpError): Promise<string> {
-  try {
-    const body = (await error.context.json()) as { error?: string; message?: string };
-    if (typeof body.error === 'string') return body.error;
-    if (typeof body.message === 'string') return body.message;
-  } catch {
-    // Fall through to the generic message.
-  }
-  return error.message || 'Layanan tidak dapat dihubungi.';
-}
-
-async function invoke<T>(name: string, body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await getSupabase().functions.invoke(name, { body });
-
-  if (error) {
-    throw new Error(await readFunctionError(error));
-  }
-
-  if (!data || typeof data !== 'object') {
-    throw new Error('Layanan mengembalikan respons yang tidak valid.');
-  }
-
-  return data as T;
-}
-
 export function submitExercise(input: {
   exerciseId: string;
   html: string;
   css: string;
   js: string;
 }): Promise<ExerciseSubmissionResult> {
-  return invoke<ExerciseSubmissionResult>('submit-exercise', input);
+  return invokeFunction<ExerciseSubmissionResult>('submit-exercise', input);
 }
 
 export function requestAiHint(input: {
@@ -60,7 +34,7 @@ export function requestAiHint(input: {
   js: string;
   errorMessage?: string;
 }): Promise<AiHintResult> {
-  return invoke<AiHintResult>('ai-hint', input);
+  return invokeFunction<AiHintResult>('ai-hint', input);
 }
 
 export function requestAiExplanation(input: {
@@ -70,5 +44,5 @@ export function requestAiExplanation(input: {
   js: string;
   errorMessage: string;
 }): Promise<AiExplanationResult> {
-  return invoke<AiExplanationResult>('ai-error-explanation', input);
+  return invokeFunction<AiExplanationResult>('ai-error-explanation', input);
 }

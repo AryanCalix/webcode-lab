@@ -290,7 +290,7 @@ export default function ModuleEditorPage() {
                       </div>
                       <p className="text-xs text-slate-500">
                         {lesson.kind === 'exercise' ? 'Latihan' : 'Materi'} · Urutan{' '}
-                        {lesson.order_index + 1}
+                        {lesson.order_index}
                       </p>
                     </div>
                   </div>
@@ -327,7 +327,7 @@ export default function ModuleEditorPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(lesson.id, lesson.title)}
-                      disabled={deleteLesson.isPending}
+                      disabled={deleteLesson.isPending || reorderLessons.isPending}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                       Hapus
