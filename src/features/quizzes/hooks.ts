@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { QuizAttemptRow, QuizRow } from '../../lib/database.types';
 import { dashboardKeys } from '../dashboard/hooks';
+import { lecturerKeys } from '../lecturer/keys';
 import { moduleKeys } from '../modules/hooks';
 import {
   deleteQuiz,
@@ -14,6 +15,7 @@ import {
   saveQuiz,
   startQuizAttempt,
   submitQuizAttempt,
+  setQuizPublished,
   type SaveQuizInput,
 } from './api';
 
@@ -101,6 +103,7 @@ export function useSaveQuiz() {
     mutationFn: (input: SaveQuizInput) => saveQuiz(input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: quizKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lecturerKeys.results() });
     },
   });
 }
@@ -112,6 +115,21 @@ export function useDeleteQuiz() {
     mutationFn: (quizId: string) => deleteQuiz(quizId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: quizKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lecturerKeys.results() });
+    },
+  });
+}
+
+export function useSetQuizPublished() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { quizId: string; isPublished: boolean }) =>
+      setQuizPublished(input.quizId, input.isPublished),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: quizKeys.all });
+      void queryClient.invalidateQueries({ queryKey: moduleKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lecturerKeys.results() });
     },
   });
 }

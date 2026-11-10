@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import type { LessonRow, ModuleRow } from '../../lib/database.types';
 import { moduleKeys } from '../modules/hooks';
 import { quizKeys } from '../quizzes/hooks';
+import { lecturerKeys } from './keys';
 import {
   deleteLesson,
   deleteModule,
@@ -13,22 +14,15 @@ import {
   fetchLecturerResults,
   fetchModuleLessons,
   fetchStudentsOverview,
+  reorderLessons,
   saveLesson,
   saveModule,
+  setLessonPublished,
   type SaveLessonInput,
   type SaveModuleInput,
 } from './api';
 
-export const lecturerKeys = {
-  all: ['lecturer'] as const,
-  students: () => [...lecturerKeys.all, 'students'] as const,
-  modules: () => [...lecturerKeys.all, 'modules'] as const,
-  lessons: () => [...lecturerKeys.all, 'lessons'] as const,
-  moduleLessons: (moduleId: string) => [...lecturerKeys.all, 'module-lessons', moduleId] as const,
-  lesson: (lessonId: string) => [...lecturerKeys.all, 'lesson', lessonId] as const,
-  exercise: (lessonId: string) => [...lecturerKeys.all, 'exercise', lessonId] as const,
-  results: () => [...lecturerKeys.all, 'results'] as const,
-};
+export { lecturerKeys };
 
 export function useStudentsOverview() {
   return useQuery({ queryKey: lecturerKeys.students(), queryFn: fetchStudentsOverview });
@@ -151,6 +145,38 @@ export function useDeleteLesson(moduleId: string | undefined) {
 
   return useMutation({
     mutationFn: (lessonId: string) => deleteLesson(lessonId),
+    onSuccess: () => {
+      invalidateContent(queryClient);
+      if (moduleId) {
+        void queryClient.invalidateQueries({ queryKey: lecturerKeys.moduleLessons(moduleId) });
+      }
+    },
+  });
+}
+
+export function useReorderLessons(moduleId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (lessonIds: string[]) => {
+      if (!moduleId) throw new Error('Modul tidak ditemukan.');
+      return reorderLessons(moduleId, lessonIds);
+    },
+    onSuccess: () => {
+      invalidateContent(queryClient);
+      if (moduleId) {
+        void queryClient.invalidateQueries({ queryKey: lecturerKeys.moduleLessons(moduleId) });
+      }
+    },
+  });
+}
+
+export function useSetLessonPublished(moduleId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { lessonId: string; isPublished: boolean }) =>
+      setLessonPublished(input.lessonId, input.isPublished),
     onSuccess: () => {
       invalidateContent(queryClient);
       if (moduleId) {

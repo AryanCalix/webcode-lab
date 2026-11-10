@@ -19,10 +19,16 @@ function mapAuthError(message: string): string {
   return message;
 }
 
+interface ProfileState {
+  userId: string | null;
+  profile: ProfileRow | null;
+}
+
+const EMPTY_PROFILE: ProfileState = { userId: null, profile: null };
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
-  const [user, setUser] = useState<ProfileRow | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileState, setProfileState] = useState<ProfileState>(EMPTY_PROFILE);
 
   useEffect(() => {
     const client = getSupabase();
@@ -37,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = client.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       if (event === 'SIGNED_OUT') {
+        setProfileState(EMPTY_PROFILE);
         queryClient.clear();
       }
     });
@@ -47,38 +54,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (session === undefined) return;
+  const sessionUserId = session?.user.id ?? null;
 
-    if (!session) {
-      setUser(null);
-      setProfileLoading(false);
-      return;
-    }
+  useEffect(() => {
+    if (!sessionUserId) return;
 
     let active = true;
-    setProfileLoading(true);
 
     getSupabase()
       .from('profiles')
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', sessionUserId)
       .maybeSingle()
       .then(({ data, error }) => {
         if (!active) return;
         if (error) {
           console.error('Gagal memuat profil pengguna', error);
-          setUser(null);
+          setProfileState({ userId: sessionUserId, profile: null });
         } else {
-          setUser(data);
+          setProfileState({ userId: sessionUserId, profile: data });
         }
-        setProfileLoading(false);
       });
 
     return () => {
       active = false;
     };
-  }, [session]);
+  }, [sessionUserId]);
 
   const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {
     const { error } = await getSupabase().auth.signInWithPassword({
@@ -98,15 +99,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.clear();
   }, []);
 
+  const profileReady = !session || profileState.userId === sessionUserId;
+  const user = session && profileReady ? profileState.profile : null;
+  const loading = session === undefined || (session !== null && !profileReady);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       session: session ?? null,
-      loading: session === undefined || profileLoading,
+      loading,
       login,
       logout,
     }),
-    [user, session, profileLoading, login, logout],
+    [user, session, loading, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

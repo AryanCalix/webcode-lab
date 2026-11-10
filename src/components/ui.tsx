@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { EmptyIllustration } from './EmptyIllustration';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 type ButtonSize = 'sm' | 'md';
@@ -73,7 +74,7 @@ export function ProgressBar({ value, className = '' }: ProgressBarProps) {
   );
 }
 
-type BadgeTone = 'green' | 'amber' | 'blue' | 'slate';
+type BadgeTone = 'green' | 'amber' | 'blue' | 'slate' | 'red';
 
 interface BadgeProps {
   children: ReactNode;
@@ -86,6 +87,7 @@ const badgeTones: Record<BadgeTone, string> = {
   amber: 'bg-amber-100 text-amber-800',
   blue: 'bg-blue-100 text-blue-800',
   slate: 'bg-slate-100 text-slate-700',
+  red: 'bg-red-100 text-red-800',
 };
 
 export function Badge({ children, tone = 'slate', className = '' }: BadgeProps) {
@@ -153,18 +155,27 @@ export function EmptyState({
   title,
   description,
   action,
+  illustration = 'modules',
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
+  illustration?: 'modules' | 'attendance' | 'projects' | 'search';
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-      <p className="font-semibold text-slate-900">{title}</p>
-      {description ? <p className="mt-1 text-sm text-slate-600">{description}</p> : null}
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+      <EmptyIllustration variant={illustration} />
+      <p className="mt-5 font-semibold text-slate-900">{title}</p>
+      {description ? (
+        <p className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-slate-600">{description}</p>
+      ) : null}
       {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
     </div>
   );
+}
+
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-xl bg-slate-200/70 ${className}`} />;
 }
 
 export function ErrorState({

@@ -1,12 +1,21 @@
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
-import { ArrowLeft, CheckCircle2, Lightbulb, Play, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Lightbulb,
+  Lock,
+  Play,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import '../../lib/monaco';
 import { useAuth } from '../../auth/AuthContext';
 import { Alert, Badge, Button, Card, ErrorState, LoadingState } from '../../components/ui';
 import { useRequestAiExplanation, useRequestAiHint, useSubmitExercise } from '../../features/exercises/hooks';
-import { useExerciseDetail, useLessonDetail } from '../../features/modules/hooks';
+import { useExerciseDetail, useLessonDetail, useModuleDetail } from '../../features/modules/hooks';
 import type { ExerciseRow, ExerciseSubmissionRow } from '../../lib/database.types';
 import { getErrorMessage } from '../../lib/errors';
 
@@ -330,17 +339,47 @@ export default function PlaygroundPage() {
   const { user } = useAuth();
   const { detail, isLoading, error } = useExerciseDetail(exerciseId, user?.id);
   const lessonState = useLessonDetail(detail?.exercise.lesson_id, user?.id);
+  const moduleState = useModuleDetail(lessonState.module?.id, user?.id);
 
-  if (isLoading || lessonState.isLoading) {
+  if (isLoading || lessonState.isLoading || moduleState.isLoading) {
     return <LoadingState label="Memuat latihan…" />;
   }
 
-  if (error) {
-    return <ErrorState message={getErrorMessage(error)} />;
+  if (error || moduleState.error) {
+    return <ErrorState message={getErrorMessage(error ?? moduleState.error)} />;
   }
 
   if (!detail) {
     return <Navigate to="/student/modules" replace />;
+  }
+
+  const moduleDetail = moduleState.detail;
+  const lessons = moduleDetail?.lessons ?? [];
+  const completedIds = moduleDetail?.completedLessonIds ?? new Set<string>();
+  const lessonIndex = lessons.findIndex((lesson) => lesson.id === detail.exercise.lesson_id);
+  const isLocked =
+    lessonIndex > 0 && lessons.slice(0, lessonIndex).some((lesson) => !completedIds.has(lesson.id));
+
+  if (isLocked) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Card className="p-8 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+            <Lock className="h-7 w-7" aria-hidden="true" />
+          </span>
+          <h1 className="mt-4 text-xl font-bold text-slate-900">Latihan masih terkunci</h1>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600">
+            Selesaikan pelajaran sebelumnya terlebih dahulu agar kamu siap mengerjakan latihan
+            ini.
+          </p>
+          <div className="mt-5 flex justify-center">
+            <Link to={lessonState.module ? `/student/modules/${lessonState.module.id}` : '/student/modules'}>
+              <Button>Kembali ke modul</Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   return (

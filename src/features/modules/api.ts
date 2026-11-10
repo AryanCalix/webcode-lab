@@ -36,7 +36,26 @@ export async function fetchLessons(moduleId: string): Promise<LessonRow[]> {
     .from('lessons')
     .select('*')
     .eq('module_id', moduleId)
-    .order('order_index', { ascending: true });
+    .order('order_index', { ascending: true })
+    .order('id', { ascending: true });
+
+  throwIfError(error);
+  return data ?? [];
+}
+
+export interface LessonIndexRow {
+  id: string;
+  module_id: string;
+  order_index: number;
+}
+
+export async function fetchLessonIndex(): Promise<LessonIndexRow[]> {
+  const { data, error } = await getSupabase()
+    .from('lessons')
+    .select('id, module_id, order_index')
+    .order('module_id', { ascending: true })
+    .order('order_index', { ascending: true })
+    .order('id', { ascending: true });
 
   throwIfError(error);
   return data ?? [];

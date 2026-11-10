@@ -12,6 +12,7 @@ import type {
   StudentProgressRow,
 } from '../../lib/database.types';
 import { throwIfError } from '../../lib/errors';
+import { isStreakCurrent } from '../../lib/format';
 import { getSupabase } from '../../lib/supabase';
 
 export interface StudentOverview {
@@ -28,35 +29,60 @@ export interface StudentOverview {
 
 export async function fetchStudentsOverview(): Promise<StudentOverview[]> {
   const supabase = getSupabase();
-  const [profilesResult, gamificationResult, progressResult] = await Promise.all([
+  const [
+    profilesResult,
+    gamificationResult,
+    progressResult,
+    modulesResult,
+    lessonsResult,
+  ] = await Promise.all([
     supabase.from('profiles').select('*').eq('role', 'student').order('full_name'),
     supabase.from('gamification_profiles').select('*'),
     supabase.from('student_progress').select('*'),
+    supabase.from('modules').select('*').eq('is_published', true),
+    supabase.from('lessons').select('*').eq('is_published', true),
   ]);
 
   throwIfError(profilesResult.error);
   throwIfError(gamificationResult.error);
   throwIfError(progressResult.error);
+  throwIfError(modulesResult.error);
+  throwIfError(lessonsResult.error);
 
   const gamificationByStudent = new Map(
     (gamificationResult.data ?? []).map((row) => [row.student_id, row] as const),
   );
 
-  const progressByStudent = new Map<string, StudentProgressRow[]>();
+  const publishedModuleIds = new Set((modulesResult.data ?? []).map((module) => module.id));
+  const lessonsPerModule = new Map<string, number>();
+  for (const lesson of lessonsResult.data ?? []) {
+    if (!publishedModuleIds.has(lesson.module_id)) continue;
+    lessonsPerModule.set(lesson.module_id, (lessonsPerModule.get(lesson.module_id) ?? 0) + 1);
+  }
+
+  // Every published module with lessons counts, even when the student has never
+  // opened it. Missing progress therefore contributes 0% instead of being ignored.
+  const gradableModuleIds = [...lessonsPerModule.keys()];
+  const totalLessons = [...lessonsPerModule.values()].reduce((sum, count) => sum + count, 0);
+
+  const progressByStudent = new Map<string, Map<string, StudentProgressRow>>();
   for (const row of progressResult.data ?? []) {
-    const list = progressByStudent.get(row.student_id) ?? [];
-    list.push(row);
-    progressByStudent.set(row.student_id, list);
+    if (!lessonsPerModule.has(row.module_id)) continue;
+    const byModule = progressByStudent.get(row.student_id) ?? new Map();
+    byModule.set(row.module_id, row);
+    progressByStudent.set(row.student_id, byModule);
   }
 
   return (profilesResult.data ?? []).map((profile) => {
     const gamification = gamificationByStudent.get(profile.id);
-    const progress = progressByStudent.get(profile.id) ?? [];
-    const activeModules = progress.filter((row) => row.total_lessons > 0);
+    const progress = progressByStudent.get(profile.id) ?? new Map<string, StudentProgressRow>();
     const averageProgress =
-      activeModules.length > 0
+      gradableModuleIds.length > 0
         ? Math.round(
-            activeModules.reduce((sum, row) => sum + row.progress_percent, 0) / activeModules.length,
+            gradableModuleIds.reduce(
+              (sum, moduleId) => sum + (progress.get(moduleId)?.progress_percent ?? 0),
+              0,
+            ) / gradableModuleIds.length,
           )
         : 0;
 
@@ -66,10 +92,16 @@ export async function fetchStudentsOverview(): Promise<StudentOverview[]> {
       totalXp: gamification?.total_xp ?? 0,
       level: gamification?.level ?? 1,
       levelName: gamification?.level_name ?? 'Pemula',
-      currentStreak: gamification?.current_streak ?? 0,
+      currentStreak:
+        gamification && isStreakCurrent(gamification.last_activity_date)
+          ? gamification.current_streak
+          : 0,
       averageProgress,
-      completedLessons: progress.reduce((sum, row) => sum + row.completed_lessons, 0),
-      totalLessons: progress.reduce((sum, row) => sum + row.total_lessons, 0),
+      completedLessons: gradableModuleIds.reduce(
+        (sum, moduleId) => sum + (progress.get(moduleId)?.completed_lessons ?? 0),
+        0,
+      ),
+      totalLessons,
     };
   });
 }
@@ -88,7 +120,8 @@ export async function fetchAllLessons(): Promise<LessonRow[]> {
   const { data, error } = await getSupabase()
     .from('lessons')
     .select('*')
-    .order('order_index', { ascending: true });
+    .order('order_index', { ascending: true })
+    .order('id', { ascending: true });
 
   throwIfError(error);
   return data ?? [];
@@ -99,7 +132,8 @@ export async function fetchModuleLessons(moduleId: string): Promise<LessonRow[]>
     .from('lessons')
     .select('*')
     .eq('module_id', moduleId)
-    .order('order_index', { ascending: true });
+    .order('order_index', { ascending: true })
+    .order('id', { ascending: true });
 
   throwIfError(error);
   return data ?? [];
@@ -218,36 +252,69 @@ export async function deleteLesson(lessonId: string): Promise<void> {
   throwIfError(error);
 }
 
+export async function reorderLessons(moduleId: string, lessonIds: string[]): Promise<void> {
+  const { error } = await getSupabase().rpc('reorder_lessons', {
+    p_module_id: moduleId,
+    p_lesson_ids: lessonIds,
+  });
+  throwIfError(error);
+}
+
+export async function setLessonPublished(
+  lessonId: string,
+  isPublished: boolean,
+): Promise<void> {
+  const { error } = await getSupabase()
+    .from('lessons')
+    .update({ is_published: isPublished })
+    .eq('id', lessonId);
+
+  throwIfError(error);
+}
+
 export interface LecturerResults {
   students: ProfileRow[];
+  modules: ModuleRow[];
+  lessons: LessonRow[];
   quizzes: QuizRow[];
   projects: ProjectRow[];
   quizAttempts: QuizAttemptRow[];
   projectSubmissions: ProjectSubmissionRow[];
+  progress: StudentProgressRow[];
 }
 
 export async function fetchLecturerResults(): Promise<LecturerResults> {
   const supabase = getSupabase();
-  const [profiles, quizzes, projects, quizAttempts, projectSubmissions] = await Promise.all([
-    supabase.from('profiles').select('*').order('full_name'),
-    supabase.from('quizzes').select('*'),
-    supabase.from('projects').select('*'),
-    supabase.from('quiz_attempts').select('*').order('started_at', { ascending: false }),
-    supabase.from('project_submissions').select('*').order('submitted_at', { ascending: false }),
-  ]);
+  const [profiles, modules, lessons, quizzes, projects, quizAttempts, projectSubmissions, progress] =
+    await Promise.all([
+      supabase.from('profiles').select('*').order('full_name'),
+      supabase.from('modules').select('*').order('order_index', { ascending: true }),
+      supabase.from('lessons').select('*').order('order_index', { ascending: true }),
+      supabase.from('quizzes').select('*'),
+      supabase.from('projects').select('*'),
+      supabase.from('quiz_attempts').select('*').order('started_at', { ascending: false }),
+      supabase.from('project_submissions').select('*').order('submitted_at', { ascending: false }),
+      supabase.from('student_progress').select('*'),
+    ]);
 
   throwIfError(profiles.error);
+  throwIfError(modules.error);
+  throwIfError(lessons.error);
   throwIfError(quizzes.error);
   throwIfError(projects.error);
   throwIfError(quizAttempts.error);
   throwIfError(projectSubmissions.error);
+  throwIfError(progress.error);
 
   return {
     students: profiles.data ?? [],
+    modules: modules.data ?? [],
+    lessons: lessons.data ?? [],
     quizzes: quizzes.data ?? [],
     projects: projects.data ?? [],
     quizAttempts: quizAttempts.data ?? [],
     projectSubmissions: projectSubmissions.data ?? [],
+    progress: progress.data ?? [],
   };
 }
 

@@ -2,13 +2,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { ProjectRow, ProjectSubmissionRow } from '../../lib/database.types';
 import { dashboardKeys } from '../dashboard/hooks';
+import { lecturerKeys } from '../lecturer/keys';
+import { moduleKeys } from '../modules/hooks';
 import {
+  deleteProject,
   fetchAllProjectSubmissions,
   fetchProject,
   fetchProjectSubmission,
   fetchProjects,
   fetchStudentProjectSubmissions,
+  gradeProjectSubmission,
+  saveProject,
+  setProjectPublished,
   submitProject,
+  type SaveProjectInput,
 } from './api';
 
 export const projectKeys = {
@@ -71,10 +78,64 @@ export function useSubmitProject(studentId: string | undefined, projectId: strin
         });
         void queryClient.invalidateQueries({ queryKey: projectKeys.submissions(studentId) });
         void queryClient.invalidateQueries({ queryKey: projectKeys.allSubmissions() });
+        void queryClient.invalidateQueries({ queryKey: lecturerKeys.results() });
         void queryClient.invalidateQueries({ queryKey: dashboardKeys.gamification(studentId) });
         void queryClient.invalidateQueries({ queryKey: dashboardKeys.badges(studentId) });
         void queryClient.invalidateQueries({ queryKey: dashboardKeys.xp(studentId) });
       }
+    },
+  });
+}
+
+export function useSaveProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: SaveProjectInput) => saveProject(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      void queryClient.invalidateQueries({ queryKey: moduleKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lecturerKeys.results() });
+    },
+  });
+}
+
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (projectId: string) => deleteProject(projectId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      void queryClient.invalidateQueries({ queryKey: moduleKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lecturerKeys.results() });
+    },
+  });
+}
+
+export function useSetProjectPublished() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { projectId: string; isPublished: boolean }) =>
+      setProjectPublished(input.projectId, input.isPublished),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      void queryClient.invalidateQueries({ queryKey: moduleKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lecturerKeys.results() });
+    },
+  });
+}
+
+export function useGradeProjectSubmission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { submissionId: string; score: number; feedback: string }) =>
+      gradeProjectSubmission(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      void queryClient.invalidateQueries({ queryKey: lecturerKeys.results() });
     },
   });
 }

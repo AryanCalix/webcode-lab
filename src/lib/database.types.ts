@@ -145,6 +145,25 @@ export type ProjectSubmissionRow = {
   submitted_at: string;
 }
 
+export type AttendanceStatus = 'present' | 'excused' | 'sick' | 'absent';
+
+export type AttendanceSessionRow = {
+  id: string;
+  session_date: string;
+  topic: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AttendanceRecordRow = {
+  session_id: string;
+  student_id: string;
+  status: AttendanceStatus;
+  note: string;
+  updated_at: string;
+}
+
 export type ForumThreadRow = {
   id: string;
   author_id: string;
@@ -360,6 +379,27 @@ export interface Database {
           submitted_at?: string;
         }
       >;
+      attendance_sessions: Table<
+        AttendanceSessionRow,
+        {
+          id?: string;
+          session_date: string;
+          topic?: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        }
+      >;
+      attendance_records: Table<
+        AttendanceRecordRow,
+        {
+          session_id: string;
+          student_id: string;
+          status?: AttendanceStatus;
+          note?: string;
+          updated_at?: string;
+        }
+      >;
       forum_threads: Table<
         ForumThreadRow,
         {
@@ -428,6 +468,22 @@ export interface Database {
       };
       recalculate_module_progress: {
         Args: { p_student_id: string; p_module_id: string };
+        Returns: null;
+      };
+      save_project: { Args: { p_project: Json }; Returns: string };
+      delete_project: { Args: { p_project_id: string }; Returns: null };
+      delete_quiz: { Args: { p_quiz_id: string }; Returns: null };
+      grade_project_submission: {
+        Args: { p_submission_id: string; p_score: number; p_feedback: string };
+        Returns: null;
+      };
+      save_attendance: {
+        Args: { p_session_date: string; p_topic: string; p_records: Json };
+        Returns: string;
+      };
+      delete_attendance_session: { Args: { p_session_id: string }; Returns: null };
+      reorder_lessons: {
+        Args: { p_module_id: string; p_lesson_ids: string[] };
         Returns: null;
       };
     };

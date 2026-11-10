@@ -17,6 +17,7 @@ import {
   fetchLesson,
   fetchLessonCompletion,
   fetchLessonCompletions,
+  fetchLessonIndex,
   fetchLessons,
   fetchModule,
   fetchModules,
@@ -29,6 +30,7 @@ import { dashboardKeys } from '../dashboard/hooks';
 export const moduleKeys = {
   all: ['modules'] as const,
   list: () => [...moduleKeys.all, 'list'] as const,
+  lessonIndex: () => [...moduleKeys.all, 'lesson-index'] as const,
   detail: (moduleId: string) => [...moduleKeys.all, 'detail', moduleId] as const,
   lessons: (moduleId: string) => [...moduleKeys.all, 'lessons', moduleId] as const,
   lesson: (lessonId: string) => [...moduleKeys.all, 'lesson', lessonId] as const,
@@ -48,12 +50,20 @@ export const moduleKeys = {
 
 export interface ModuleWithProgress extends ModuleRow {
   progress: StudentProgressRow | null;
+  lessonCount: number;
 }
 
 export function useModules() {
   return useQuery({
     queryKey: moduleKeys.list(),
     queryFn: fetchModules,
+  });
+}
+
+export function useLessonIndex() {
+  return useQuery({
+    queryKey: moduleKeys.lessonIndex(),
+    queryFn: fetchLessonIndex,
   });
 }
 
@@ -68,25 +78,32 @@ export function useStudentProgress(studentId: string | undefined) {
 export function useModulesWithProgress(studentId: string | undefined) {
   const modulesQuery = useModules();
   const progressQuery = useStudentProgress(studentId);
+  const lessonIndexQuery = useLessonIndex();
 
   const modules = useMemo<ModuleWithProgress[]>(() => {
     const progressByModule = new Map(
       (progressQuery.data ?? []).map((row) => [row.module_id, row] as const),
     );
+    const lessonCounts = new Map<string, number>();
+    for (const lesson of lessonIndexQuery.data ?? []) {
+      lessonCounts.set(lesson.module_id, (lessonCounts.get(lesson.module_id) ?? 0) + 1);
+    }
 
     return (modulesQuery.data ?? []).map((module) => ({
       ...module,
       progress: progressByModule.get(module.id) ?? null,
+      lessonCount: lessonCounts.get(module.id) ?? 0,
     }));
-  }, [modulesQuery.data, progressQuery.data]);
+  }, [modulesQuery.data, progressQuery.data, lessonIndexQuery.data]);
 
   return {
     modules,
-    isLoading: modulesQuery.isLoading || progressQuery.isLoading,
-    error: modulesQuery.error ?? progressQuery.error,
+    isLoading: modulesQuery.isLoading || progressQuery.isLoading || lessonIndexQuery.isLoading,
+    error: modulesQuery.error ?? progressQuery.error ?? lessonIndexQuery.error,
     refetch: () => {
       void modulesQuery.refetch();
       void progressQuery.refetch();
+      void lessonIndexQuery.refetch();
     },
   };
 }
@@ -190,6 +207,7 @@ export function useModuleDetail(moduleId: string | undefined, studentId: string 
       moduleQuery.isLoading ||
       lessonsQuery.isLoading ||
       progressQuery.isLoading ||
+      completionsQuery.isLoading ||
       exercisesQuery.isLoading ||
       quizzesQuery.isLoading ||
       projectsQuery.isLoading,

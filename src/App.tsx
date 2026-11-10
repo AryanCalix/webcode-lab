@@ -12,12 +12,17 @@ import ModulesPage from './pages/lecturer/ModulesPage';
 import ModuleEditorPage from './pages/lecturer/ModuleEditorPage';
 import LessonEditorPage from './pages/lecturer/LessonEditorPage';
 import StudentsPage from './pages/lecturer/StudentsPage';
+import LecturerStudentDetailPage from './pages/lecturer/StudentDetailPage';
+import LecturerAttendancePage from './pages/lecturer/AttendancePage';
+import LecturerProjectListPage from './pages/lecturer/ProjectListPage';
+import LecturerProjectEditorPage from './pages/lecturer/ProjectEditorPage';
 import LoginPage from './pages/LoginPage';
 import LessonDetailPage from './pages/student/LessonDetailPage';
 import ModuleDetailPage from './pages/student/ModuleDetailPage';
 import ModuleListPage from './pages/student/ModuleListPage';
 import ProjectDetailPage from './pages/student/ProjectDetailPage';
 import ProjectListPage from './pages/student/ProjectListPage';
+import StudentAttendancePage from './pages/student/StudentAttendancePage';
 import StudentForumListPage from './pages/student/ForumListPage';
 import ForumCreatePage from './pages/student/ForumCreatePage';
 import StudentForumDetailPage from './pages/student/ForumDetailPage';
@@ -83,6 +88,7 @@ export default function App() {
             <Route path="/student/quizzes/:quizId" element={<QuizTakePage />} />
             <Route path="/student/projects" element={<ProjectListPage />} />
             <Route path="/student/projects/:projectId" element={<ProjectDetailPage />} />
+            <Route path="/student/attendance" element={<StudentAttendancePage />} />
             <Route path="/student/forum" element={<StudentForumListPage />} />
             <Route path="/student/forum/new" element={<ForumCreatePage />} />
             <Route path="/student/forum/:threadId" element={<StudentForumDetailPage />} />
@@ -101,6 +107,10 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/lecturer/dashboard" element={<LecturerDashboardPage />} />
             <Route path="/lecturer/students" element={<StudentsPage />} />
+            <Route
+              path="/lecturer/students/:studentId"
+              element={<LecturerStudentDetailPage />}
+            />
             <Route path="/lecturer/modules" element={<ModulesPage />} />
             <Route path="/lecturer/modules/:moduleId" element={<ModuleEditorPage />} />
             <Route path="/lecturer/modules/:moduleId/lessons/new" element={<LessonEditorPage />} />
@@ -111,6 +121,13 @@ export default function App() {
             <Route path="/lecturer/quizzes" element={<LecturerQuizListPage />} />
             <Route path="/lecturer/quizzes/new" element={<QuizEditorPage />} />
             <Route path="/lecturer/quizzes/:quizId/edit" element={<QuizEditorPage />} />
+            <Route path="/lecturer/projects" element={<LecturerProjectListPage />} />
+            <Route path="/lecturer/projects/new" element={<LecturerProjectEditorPage />} />
+            <Route
+              path="/lecturer/projects/:projectId/edit"
+              element={<LecturerProjectEditorPage />}
+            />
+            <Route path="/lecturer/attendance" element={<LecturerAttendancePage />} />
             <Route path="/lecturer/results" element={<LecturerResultsPage />} />
           </Route>
         </Route>

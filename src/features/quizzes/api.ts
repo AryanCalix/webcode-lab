@@ -182,6 +182,15 @@ export async function saveQuiz(input: SaveQuizInput): Promise<string> {
 }
 
 export async function deleteQuiz(quizId: string): Promise<void> {
-  const { error } = await getSupabase().from('quizzes').delete().eq('id', quizId);
+  const { error } = await getSupabase().rpc('delete_quiz', { p_quiz_id: quizId });
+  throwIfError(error);
+}
+
+export async function setQuizPublished(quizId: string, isPublished: boolean): Promise<void> {
+  const { error } = await getSupabase()
+    .from('quizzes')
+    .update({ is_published: isPublished })
+    .eq('id', quizId);
+
   throwIfError(error);
 }

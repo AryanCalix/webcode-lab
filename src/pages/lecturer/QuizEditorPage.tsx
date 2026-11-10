@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Plus, Save, Trash2 } from 'lucide-react';
 import {
   Alert,
@@ -51,17 +51,24 @@ function QuizForm({
   quiz,
   questions,
   modules,
+  defaultModuleId,
 }: {
   quiz: QuizRow | null;
   questions: QuizQuestionRow[];
   modules: ModuleRow[];
+  defaultModuleId?: string;
 }) {
   const navigate = useNavigate();
   const saveQuiz = useSaveQuiz();
 
   const [title, setTitle] = useState(quiz?.title ?? '');
   const [description, setDescription] = useState(quiz?.description ?? '');
-  const [moduleId, setModuleId] = useState(quiz?.module_id ?? modules[0]?.id ?? '');
+  const [moduleId, setModuleId] = useState(
+    quiz?.module_id ??
+      (modules.some((module) => module.id === defaultModuleId)
+        ? (defaultModuleId as string)
+        : (modules[0]?.id ?? '')),
+  );
   const [durationMinutes, setDurationMinutes] = useState(
     quiz?.duration_minutes ? String(quiz.duration_minutes) : '',
   );
@@ -385,6 +392,8 @@ function QuizForm({
 
 export default function QuizEditorPage() {
   const { quizId } = useParams<{ quizId: string }>();
+  const [searchParams] = useSearchParams();
+  const defaultModuleId = searchParams.get('moduleId') ?? undefined;
   const modulesQuery = useAllModules();
   const quizQuery = useQuiz(quizId);
   const questionsQuery = useQuizQuestions(quizId);
@@ -446,6 +455,7 @@ export default function QuizEditorPage() {
         quiz={quizQuery.data ?? null}
         questions={questionsQuery.data ?? []}
         modules={modules}
+        defaultModuleId={defaultModuleId}
       />
     </div>
   );
