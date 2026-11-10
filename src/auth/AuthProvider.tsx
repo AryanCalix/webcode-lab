@@ -1,58 +1,112 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { demoUsers, type User } from '../data/demoData';
-import { AuthContext, type AuthContextValue } from './AuthContext';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import type { ProfileRow } from '../lib/database.types';
+import { queryClient } from '../lib/queryClient';
+import { getSupabase } from '../lib/supabase';
+import { AuthContext, type AuthContextValue, type LoginResult } from './AuthContext';
 
-const SESSION_STORAGE_KEY = 'webcode.session';
-
-function readStoredSessionUser(): User | null {
-  try {
-    const storedId = window.localStorage.getItem(SESSION_STORAGE_KEY);
-    if (!storedId) {
-      return null;
-    }
-    const storedUser = demoUsers.find((candidate) => candidate.id === storedId);
-    return storedUser ?? null;
-  } catch {
-    // localStorage bisa diblokir (mis. private mode); anggap tidak ada sesi.
-    return null;
+function mapAuthError(message: string): string {
+  const normalized = message.toLowerCase();
+  if (normalized.includes('invalid login credentials')) {
+    return 'Email atau password salah.';
   }
+  if (normalized.includes('email not confirmed')) {
+    return 'Email belum dikonfirmasi. Hubungi dosen atau administrator.';
+  }
+  if (normalized.includes('too many requests')) {
+    return 'Terlalu banyak percobaan masuk. Coba lagi beberapa saat lagi.';
+  }
+  return message;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => readStoredSessionUser());
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [user, setUser] = useState<ProfileRow | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  const login = useCallback((email: string, password: string) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const found = demoUsers.find(
-      (candidate) =>
-        candidate.email.toLowerCase() === normalizedEmail && candidate.password === password,
-    );
+  useEffect(() => {
+    const client = getSupabase();
+    let active = true;
 
-    if (!found) {
-      return { ok: false as const, error: 'Email atau password tidak cocok dengan akun demo.' };
-    }
+    client.auth.getSession().then(({ data }) => {
+      if (active) setSession(data.session);
+    });
 
-    setUser(found);
-    try {
-      window.localStorage.setItem(SESSION_STORAGE_KEY, found.id);
-    } catch {
-      // abaikan kegagalan penyimpanan lokal
-    }
-    return { ok: true as const };
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange((event, nextSession) => {
+      setSession(nextSession);
+      if (event === 'SIGNED_OUT') {
+        queryClient.clear();
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    try {
-      window.localStorage.removeItem(SESSION_STORAGE_KEY);
-    } catch {
-      // abaikan
+  useEffect(() => {
+    if (session === undefined) return;
+
+    if (!session) {
+      setUser(null);
+      setProfileLoading(false);
+      return;
     }
+
+    let active = true;
+    setProfileLoading(true);
+
+    getSupabase()
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          console.error('Gagal memuat profil pengguna', error);
+          setUser(null);
+        } else {
+          setUser(data);
+        }
+        setProfileLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {
+    const { error } = await getSupabase().auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+
+    if (error) {
+      return { ok: false, error: mapAuthError(error.message) };
+    }
+
+    return { ok: true };
+  }, []);
+
+  const logout = useCallback(async () => {
+    await getSupabase().auth.signOut();
+    queryClient.clear();
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, login, logout }),
-    [user, login, logout],
+    () => ({
+      user,
+      session: session ?? null,
+      loading: session === undefined || profileLoading,
+      login,
+      logout,
+    }),
+    [user, session, profileLoading, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

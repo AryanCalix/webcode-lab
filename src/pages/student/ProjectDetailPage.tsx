@@ -1,68 +1,110 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { Send } from 'lucide-react';
-import { getProjectById, getProjectSubmissions, saveProjectSubmission } from '../../data/demoData';
-import { Button, Card } from '../../components/ui';
+import { ArrowLeft, ExternalLink, Send } from 'lucide-react';
+import { useAuth } from '../../auth/AuthContext';
+import { Alert, Badge, Button, Card, ErrorState, LoadingState } from '../../components/ui';
+import {
+  useProject,
+  useProjectSubmission,
+  useSubmitProject,
+} from '../../features/projects/hooks';
+import { getErrorMessage } from '../../lib/errors';
+import { formatDateTime, safeExternalUrl } from '../../lib/format';
 
 export default function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const project = projectId ? getProjectById(projectId) : undefined;
-  const submissions = getProjectSubmissions();
+  const { user } = useAuth();
+  const projectQuery = useProject(projectId);
+  const submissionQuery = useProjectSubmission(user?.id, projectId);
+  const submitProject = useSubmitProject(user?.id, projectId);
 
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [submissionText, setSubmissionText] = useState('');
-  const [justSubmitted, setJustSubmitted] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  if (!project) {
-    return <Navigate to="/student/projects" replace />;
+  useEffect(() => {
+    if (!submissionQuery.data) return;
+    setSubmissionUrl(submissionQuery.data.submission_url ?? '');
+    setSubmissionText(submissionQuery.data.submission_text ?? '');
+  }, [submissionQuery.data]);
+
+  if (projectQuery.isLoading || submissionQuery.isLoading) {
+    return <LoadingState label="Memuat proyek…" />;
   }
 
-  const existingSubmission = submissions.find((item) => item.projectId === project.id && item.studentId === 'usr_student');
+  if (projectQuery.error) {
+    return <ErrorState message={getErrorMessage(projectQuery.error)} />;
+  }
+
+  const project = projectQuery.data;
+  if (!project) return <Navigate to="/student/projects" replace />;
+
+  const submission = submissionQuery.data;
+  const safeUrl = safeExternalUrl(submission?.submission_url);
+  const isPastDeadline = project.deadline_at ? new Date(project.deadline_at) < new Date() : false;
 
   const handleSubmit = () => {
-    const submission = {
-      id: `prjsub-${Date.now()}`,
-      projectId: project.id,
-      studentId: 'usr_student',
-      studentName: 'Budi Santoso',
-      submissionUrl: submissionUrl.trim() || null,
-      submissionText: submissionText.trim() || null,
-      submittedAt: new Date().toISOString(),
-    };
-    saveProjectSubmission(submission);
-    setJustSubmitted(true);
-  };
+    setFormError(null);
+    const url = submissionUrl.trim();
+    const text = submissionText.trim();
 
-  const hasContent = Boolean(submissionUrl.trim() || submissionText.trim());
+    if (!url && !text) {
+      setFormError('Isi tautan proyek atau deskripsi hasil terlebih dahulu.');
+      return;
+    }
+
+    if (url && !/^https?:\/\//i.test(url)) {
+      setFormError('Tautan proyek harus diawali http:// atau https://.');
+      return;
+    }
+
+    submitProject.mutate({ url: url || null, text: text || null });
+  };
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <Link
         to="/student/projects"
-        className="text-sm font-medium text-slate-500 hover:text-slate-900"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900"
       >
-        ← Kembali ke daftar proyek
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        Kembali ke daftar proyek
       </Link>
 
       <Card className="p-6">
-        <h1 className="text-2xl font-bold text-slate-900">{project.title}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-900">{project.title}</h1>
+          {submission ? <Badge tone="green">Sudah dikumpulkan</Badge> : <Badge tone="slate">Belum dikumpulkan</Badge>}
+        </div>
         <p className="mt-2 text-sm text-slate-600">{project.description}</p>
         <p className="mt-2 text-xs text-slate-500">
-          Tenggat:{' '}
-          {project.deadlineAt ? new Date(project.deadlineAt).toLocaleString('id-ID') : 'tidak ditentukan'}
+          Tenggat: {project.deadline_at ? formatDateTime(project.deadline_at) : 'tidak ditentukan'}
         </p>
+        {isPastDeadline ? (
+          <div className="mt-4">
+            <Alert tone="error">Tenggat proyek ini sudah lewat. Pengumpulan baru tidak dapat dilakukan.</Alert>
+          </div>
+        ) : null}
       </Card>
 
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Hasil / tautan proyek</h2>
-        {existingSubmission ? (
+        <h2 className="text-lg font-semibold text-slate-900">Pengumpulan</h2>
+
+        {submission ? (
           <div className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
-            Anda sudah mengumpulkan proyek ini. Terakhir dikumpulkan:{' '}
-            {new Date(existingSubmission.submittedAt).toLocaleString('id-ID')}
-            {existingSubmission.submissionUrl ? (
+            Terakhir dikumpulkan {formatDateTime(submission.submitted_at)}.
+            {safeUrl ? (
               <>
                 {' '}
-                — <a className="font-semibold underline" href={existingSubmission.submissionUrl}>tautan</a>
+                <a
+                  href={safeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-semibold underline"
+                >
+                  Buka tautan
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
               </>
             ) : null}
           </div>
@@ -70,38 +112,49 @@ export default function ProjectDetailPage() {
 
         <div className="mt-4 flex flex-col gap-3">
           <div>
-            <label htmlFor="prj-url" className="mb-1 block text-sm font-semibold text-slate-700">
+            <label htmlFor="project-url" className="mb-1 block text-sm font-semibold text-slate-700">
               Tautan proyek (opsional)
             </label>
             <input
-              id="prj-url"
+              id="project-url"
               type="url"
               value={submissionUrl}
               onChange={(event) => setSubmissionUrl(event.target.value)}
               placeholder="https://..."
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              disabled={isPastDeadline}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:bg-slate-50"
             />
           </div>
           <div>
-            <label htmlFor="prj-text" className="mb-1 block text-sm font-semibold text-slate-700">
+            <label htmlFor="project-text" className="mb-1 block text-sm font-semibold text-slate-700">
               Deskripsi hasil / kode (opsional)
             </label>
             <textarea
-              id="prj-text"
+              id="project-text"
               value={submissionText}
               onChange={(event) => setSubmissionText(event.target.value)}
-              rows={4}
+              rows={5}
+              disabled={isPastDeadline}
               placeholder="Tulis ringkasan hasil atau tempel kode..."
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:bg-slate-50"
             />
           </div>
-          <Button onClick={handleSubmit} disabled={!hasContent && !justSubmitted}>
-            <Send className="h-4 w-4" aria-hidden="true" />
-            Kirim Proyek
-          </Button>
-          {justSubmitted && hasContent ? (
-            <p className="text-xs text-emerald-700">Pengumpulan proyek berhasil disimpan (demo).</p>
+
+          {formError ? <Alert tone="error">{formError}</Alert> : null}
+          {submitProject.error ? <Alert tone="error">{getErrorMessage(submitProject.error)}</Alert> : null}
+          {submitProject.isSuccess ? (
+            <Alert tone="success">Pengumpulan proyek berhasil disimpan.</Alert>
           ) : null}
+
+          <div>
+            <Button
+              onClick={handleSubmit}
+              disabled={isPastDeadline || submitProject.isPending}
+            >
+              <Send className="h-4 w-4" aria-hidden="true" />
+              {submitProject.isPending ? 'Mengirim…' : submission ? 'Perbarui Pengumpulan' : 'Kirim Proyek'}
+            </Button>
+          </div>
         </div>
       </Card>
     </div>

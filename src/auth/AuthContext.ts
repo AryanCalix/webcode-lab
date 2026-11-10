@@ -1,9 +1,18 @@
 import { createContext, useContext } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import type { ProfileRow } from '../lib/database.types';
+
+export interface LoginResult {
+  ok: boolean;
+  error?: string;
+}
 
 export interface AuthContextValue {
-  user: import('../data/demoData').User | null;
-  login: (email: string, password: string) => { ok: true } | { ok: false; error: string };
-  logout: () => void;
+  user: ProfileRow | null;
+  session: Session | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

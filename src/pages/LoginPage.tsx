@@ -1,30 +1,40 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Code2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { Alert, Button, Field } from '../components/ui';
+import { Alert, Button, Field, inputClassName } from '../components/ui';
+
+const DEMO_ACCOUNTS = [
+  { role: 'Mahasiswa', email: 'budi@webcode.lab', password: 'budi1234' },
+  { role: 'Dosen', email: 'siti@webcode.lab', password: 'siti1234' },
+];
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
-    const result = login(email, password);
+    const result = await login(email, password);
 
     if (result.ok) {
       navigate('/', { replace: true });
-    } else {
-      setError(result.error);
-      setIsSubmitting(false);
+      return;
     }
+
+    setError(result.error ?? 'Gagal masuk. Periksa email dan password Anda.');
+    setIsSubmitting(false);
   };
 
   const fillDemoCredentials = (demoEmail: string, demoPassword: string) => {
@@ -49,7 +59,7 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-4">
             {error ? <Alert tone="error">{error}</Alert> : null}
 
             <Field label="Email" htmlFor="email">
@@ -62,7 +72,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="nama@webcode.lab"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                className={inputClassName}
               />
             </Field>
 
@@ -76,12 +86,12 @@ export default function LoginPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                className={inputClassName}
               />
             </Field>
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              Masuk
+              {isSubmitting ? 'Memproses…' : 'Masuk'}
             </Button>
           </form>
 
@@ -90,35 +100,23 @@ export default function LoginPage() {
               Akun demo
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fillDemoCredentials('budi@webcode.lab', 'budi1234')}
-              >
-                Mahasiswa
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fillDemoCredentials('siti@webcode.lab', 'siti1234')}
-              >
-                Dosen
-              </Button>
+              {DEMO_ACCOUNTS.map((account) => (
+                <Button
+                  key={account.email}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fillDemoCredentials(account.email, account.password)}
+                >
+                  {account.role}
+                </Button>
+              ))}
             </div>
             <p className="mt-3 text-center text-xs text-slate-500">
-              Gunakan akun demo di atas untuk mencoba alur belajar.
+              Pendaftaran publik dinonaktifkan. Hubungi dosen jika Anda belum memiliki akun.
             </p>
           </div>
         </div>
-
-        <p className="mt-4 text-center text-sm text-slate-600">
-          Belum punya akun?{' '}
-          <Link to="/" className="font-semibold text-brand-700 hover:text-brand-800">
-            Kembali ke beranda
-          </Link>
-        </p>
       </div>
     </div>
   );

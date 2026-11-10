@@ -1,85 +1,123 @@
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
-import { AuthProvider } from './auth/AuthProvider';
+import { lazy, Suspense } from 'react';
+import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
-import { RequireAuth, RequireLecturer, RequireStudent } from './auth/RequireAuth';
-import { Button } from './components/ui';
+import { AuthLoadingScreen, RequireAuth, RequireLecturer, RequireStudent } from './auth/RequireAuth';
 import { AppLayout } from './components/Layout';
+import { Card, LoadingState } from './components/ui';
 import LecturerDashboardPage from './pages/lecturer/LecturerDashboardPage';
 import LecturerResultsPage from './pages/lecturer/LecturerResultsPage';
 import LecturerQuizListPage from './pages/lecturer/QuizListPage';
 import QuizEditorPage from './pages/lecturer/QuizEditorPage';
+import ModulesPage from './pages/lecturer/ModulesPage';
+import ModuleEditorPage from './pages/lecturer/ModuleEditorPage';
+import LessonEditorPage from './pages/lecturer/LessonEditorPage';
+import StudentsPage from './pages/lecturer/StudentsPage';
 import LoginPage from './pages/LoginPage';
+import LessonDetailPage from './pages/student/LessonDetailPage';
 import ModuleDetailPage from './pages/student/ModuleDetailPage';
 import ModuleListPage from './pages/student/ModuleListPage';
-import PlaygroundPage from './pages/student/PlaygroundPage';
 import ProjectDetailPage from './pages/student/ProjectDetailPage';
 import ProjectListPage from './pages/student/ProjectListPage';
 import StudentForumListPage from './pages/student/ForumListPage';
+import ForumCreatePage from './pages/student/ForumCreatePage';
 import StudentForumDetailPage from './pages/student/ForumDetailPage';
 import StudentQuizListPage from './pages/student/QuizListPage';
 import QuizTakePage from './pages/student/QuizTakePage';
 import StudentDashboardPage from './pages/student/StudentDashboardPage';
 
-function RootRedirect() {
-  const { user } = useAuth();
+// Monaco is large; only load the editor bundle when the playground is opened.
+const PlaygroundPage = lazy(() => import('./pages/student/PlaygroundPage'));
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+function RootRedirect() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <AuthLoadingScreen />;
+  if (!user) return <Navigate to="/login" replace />;
 
   return <Navigate to={user.role === 'lecturer' ? '/lecturer/dashboard' : '/student/dashboard'} replace />;
 }
 
 function NotFoundPage() {
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const home = user
+    ? user.role === 'lecturer'
+      ? '/lecturer/dashboard'
+      : '/student/dashboard'
+    : '/login';
 
   return (
-    <div className="mx-auto max-w-xl text-center">
-      <h1 className="text-3xl font-bold text-slate-900">Halaman tidak ditemukan</h1>
-      <p className="mt-2 text-slate-600">Halaman yang Anda tunggu belum tersedia.</p>
-      <div className="mt-6">
-        <Button onClick={() => navigate('/login', { replace: true })}>Ke halaman login</Button>
-      </div>
+    <div className="mx-auto flex min-h-svh max-w-xl items-center px-4">
+      <Card className="w-full p-8 text-center">
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">404</p>
+        <h1 className="mt-2 text-2xl font-bold text-slate-900">Halaman tidak ditemukan</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Alamat yang Anda buka tidak tersedia atau sudah dipindahkan.
+        </p>
+        <Link
+          to={home}
+          className="mt-6 inline-flex rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+        >
+          Kembali ke halaman utama
+        </Link>
+      </Card>
     </div>
   );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
 
-        <Route element={<RequireAuth />}>
-          <Route element={<RequireStudent />}>
-            <Route element={<AppLayout />}>
-              <Route path="/student/dashboard" element={<StudentDashboardPage />} />
-              <Route path="/student/modules" element={<ModuleListPage />} />
-              <Route path="/student/modules/:moduleId" element={<ModuleDetailPage />} />
-              <Route path="/student/playground/:exerciseId" element={<PlaygroundPage />} />
-              <Route path="/student/quizzes" element={<StudentQuizListPage />} />
-              <Route path="/student/quizzes/:quizId" element={<QuizTakePage />} />
-              <Route path="/student/projects" element={<ProjectListPage />} />
-              <Route path="/student/projects/:projectId" element={<ProjectDetailPage />} />
-              <Route path="/student/forum" element={<StudentForumListPage />} />
-              <Route path="/student/forum/:threadId" element={<StudentForumDetailPage />} />
-            </Route>
-          </Route>
-
-          <Route element={<RequireLecturer />}>
-            <Route element={<AppLayout />}>
-              <Route path="/lecturer/dashboard" element={<LecturerDashboardPage />} />
-              <Route path="/lecturer/quizzes" element={<LecturerQuizListPage />} />
-              <Route path="/lecturer/quizzes/new" element={<QuizEditorPage />} />
-              <Route path="/lecturer/quizzes/:quizId/edit" element={<QuizEditorPage />} />
-              <Route path="/lecturer/results" element={<LecturerResultsPage />} />
-            </Route>
+      <Route element={<RequireAuth />}>
+        <Route element={<RequireStudent />}>
+          <Route element={<AppLayout />}>
+            <Route path="/student/dashboard" element={<StudentDashboardPage />} />
+            <Route path="/student/modules" element={<ModuleListPage />} />
+            <Route path="/student/modules/:moduleId" element={<ModuleDetailPage />} />
+            <Route
+              path="/student/modules/:moduleId/lessons/:lessonId"
+              element={<LessonDetailPage />}
+            />
+            <Route path="/student/quizzes" element={<StudentQuizListPage />} />
+            <Route path="/student/quizzes/:quizId" element={<QuizTakePage />} />
+            <Route path="/student/projects" element={<ProjectListPage />} />
+            <Route path="/student/projects/:projectId" element={<ProjectDetailPage />} />
+            <Route path="/student/forum" element={<StudentForumListPage />} />
+            <Route path="/student/forum/new" element={<ForumCreatePage />} />
+            <Route path="/student/forum/:threadId" element={<StudentForumDetailPage />} />
+            <Route
+              path="/student/playground/:exerciseId"
+              element={
+                <Suspense fallback={<LoadingState label="Memuat editor kode…" />}>
+                  <PlaygroundPage />
+                </Suspense>
+              }
+            />
           </Route>
         </Route>
 
-        <Route path="*" element={<NotFoundPage />} />
-        <Route path="/" element={<RootRedirect />} />
-      </Routes>
-    </AuthProvider>
+        <Route element={<RequireLecturer />}>
+          <Route element={<AppLayout />}>
+            <Route path="/lecturer/dashboard" element={<LecturerDashboardPage />} />
+            <Route path="/lecturer/students" element={<StudentsPage />} />
+            <Route path="/lecturer/modules" element={<ModulesPage />} />
+            <Route path="/lecturer/modules/:moduleId" element={<ModuleEditorPage />} />
+            <Route path="/lecturer/modules/:moduleId/lessons/new" element={<LessonEditorPage />} />
+            <Route
+              path="/lecturer/modules/:moduleId/lessons/:lessonId"
+              element={<LessonEditorPage />}
+            />
+            <Route path="/lecturer/quizzes" element={<LecturerQuizListPage />} />
+            <Route path="/lecturer/quizzes/new" element={<QuizEditorPage />} />
+            <Route path="/lecturer/quizzes/:quizId/edit" element={<QuizEditorPage />} />
+            <Route path="/lecturer/results" element={<LecturerResultsPage />} />
+          </Route>
+        </Route>
+      </Route>
+
+      <Route path="/" element={<RootRedirect />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   );
 }

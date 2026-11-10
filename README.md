@@ -6,30 +6,61 @@ Aplikasi ini dibangun berdasarkan dokumen konteks produk **WebCode Lab — Ranca
 
 ## Tech Stack
 
-- React 19 + Vite 8 + TypeScript
+- React 19 + Vite 8 + TypeScript (strict)
 - Tailwind CSS v4
 - React Router v7
-- Monaco Editor, iframe sandbox, dan AI (Claude API) akan ditambahkan pada fase berikutnya
+- Monaco Editor (self-hosted, lazy-loaded) + iframe sandbox
+- Supabase Auth + Postgres + Row Level Security + Edge Functions
+- TanStack Query, Zod, Vitest, Playwright, oxlint
 
-## Fitur yang sudah berfungsi (Fase 1)
+## Fitur (produksi)
 
-- Halaman login dengan dua akun demo (mahasiswa & dosen).
-- Autentikasi mock (localStorage) dengan dua role: `student` dan `lecturer`.
-- Proteksi route berdasarkan role.
-- Layout aplikasi dengan navigasi sidebar (desktop) dan chip navigasi (mobile).
-- Dashboard mahasiswa: greeting, level, total XP, streak, dan daftar modul dengan progress bar.
-- Tombol **Lanjutkan Belajar** yang membuka modul pertama yang belum selesai.
-- Dashboard dosen: ringkasan kelas, rata-rata progres, dan perkembangan mahasiswa (demo).
-- Halaman daftar modul dan detail modul dengan status/progres.
+- **Auth**: Supabase Auth (email + password), dua akun demo, pendaftaran publik dinonaktifkan.
+- **Materi & latihan**: modul → pelajaran → latihan; penilaian kode server-side via Edge Function `submit-exercise` dengan validasi HTML/CSS (selector, teks, properti warna) + pencatatan XP.
+- **AI**: Edge Functions `ai-hint` & `ai-error-explanation` memakai Claude API (server-side only) dengan rate limit; fallback ke hint latihan saat AI belum dikonfigurasi.
+- **Kuis**: RPC `start_quiz_attempt` / `submit_quiz_attempt`; jawaban dihitung server-side, kunci jawaban hanya dibawa mahasiswa lewat RPC.
+- **Proyek mini**: pengumpulan tautan & teks via RPC `submit_project`.
+- **Forum**: diskusi mahasiswa + respons dari dosen.
+- **Gamifikasi**: XP / level / streak / badge melalui RPC keamanan `SECURITY DEFINER`.
+- **Dashboard dosen**: ringkasan mahasiswa, modul, hasil kuis & pengumpulan proyek.
 
-## Cara Menjalankan
+## Struktur Penting
 
-```bash
-npm install
-npm run dev
+```
+supabase/
+  config.toml
+  migrations/        # schema, RLS, domain functions, seed demo content
+  functions/         # _shared + submit-exercise, ai-hint, ai-error-explanation
+src/
+  features/          # modul, dashboard, quizzes, projects, forum, lecturer, exercises
+  lib/               # supabase client, database types, format, errors, queryClient
+  pages/             # student & lecturer pages
+  auth/              # Supabase session handling + guards
+e2e/                 # Playwright smoke tests
+scripts/             # seed auth demo users via service role
 ```
 
-Buka http://localhost:5173
+## Environment
+
+```bash
+cp .env.example .env.local   # lalu isi VITE_SUPABASE_URL & VITE_SUPABASE_ANON_KEY
+cp .env.seed.example .env.seed # lalu isi SUPABASE_URL & SUPABASE_SERVICE_ROLE_KEY
+```
+
+Hanya nilai `VITE_*` berikut yang boleh ada di frontend (publishable key); service role & kunci AI tidak pernah boleh masuk ke browser.
+
+## Setup Backend (Supabase)
+
+```bash
+npx supabase login
+npx supabase link --project-ref <PROJECT_REF>
+npx supabase db push          # terapkan migrasi + seed demo content
+npm run seed:auth             # buat akun auth demo + aktivitas awal
+npx supabase functions deploy --project-ref <PROJECT_REF>
+npx supabase secrets set ANTHROPIC_API_KEY=...
+npx supabase secrets set ANTHROPIC_MODEL=claude-3-5-haiku-latest
+npx supabase secrets set ALLOWED_ORIGINS=http://localhost:5173
+```
 
 ## Akun Demo
 
@@ -38,18 +69,31 @@ Buka http://localhost:5173
 | Mahasiswa | budi@webcode.lab | budi1234   |
 | Dosen    | siti@webcode.lab   | siti1234   |
 
-## Perintah Lain
+## Perintah
 
 ```bash
-npm run build   # typecheck + build production
-npm run lint    # oxlint
-npm run preview # preview build production
+npm run dev        # dev server
+npm run build      # typecheck + build production
+npm run typecheck  # tsc -b
+npm run lint       # oxlint
+npm run test       # vitest
+npm run test:e2e   # playwright (butuh dev server & browser)
+npm run preview    # preview build production
+npm run seed:auth # seed akun demo + aktivitas awal
+npm run db:push    # supabase db push
+npm run db:diff    # supabase db diff
+npm run functions:serve
 ```
 
-## Status Fase
+## Keamanan
 
-- **Fase 1** — fondasi aplikasi, auth/role, routing, dashboard: ✅ selesai (build & lint lolos).
-- **Fase 2** — materi, playground, hint, cek jawaban: ✅ selesai.
-- **Fase 3** — kuis, proyek mini: ✅ selesai (CRUD + publish kuis, pengerjaan/penilaian kuis, daftar proyek & pengumpulan).
-- **Fase 4** — forum, gamifikasi: ✅ selesai (forum thread & replies, XP/level/streak/badge dengan anti-duplikat).
-- **Fase 5** — integrasi AI dan penyempurnaan: 🚧 in progress (AI service + hint flow + loading state; integrasi backend Claude API produksi menunggu backend server).
+- Row Level Security aktif di semua tabel publik; akses lewat RPC `SECURITY DEFINER` yang sudah divalidasi.
+- Quiz kunci jawaban hanya dibagikan lewat RPC `start_quiz_attempt` / `submit_quiz_attempt` (server-side grading).
+- Edge Functions memakai auth user JWT + service role server-side; rate limit AI (mis. 20 request / 60 menit untuk hint).
+- Validasi kode latihan dijalankan di Edge Function, bukan di browser.
+
+## Status
+
+- Fondasi, auth, modul, playground, kuis, proyek, forum, gamifikasi: ✅ selesai.
+- AI (Claude) via Edge Function dengan fallback: ✅ terpasang (mengbut pengaturan secret).
+- End-to-end & production deploy: menunggu kredensial Supabase / Anthropic.

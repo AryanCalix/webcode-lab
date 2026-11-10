@@ -9,16 +9,18 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700 focus-visible:ring-brand-500',
-  secondary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500',
+  primary:
+    'bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2',
+  secondary:
+    'bg-slate-900 text-white shadow-sm hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2',
   outline:
-    'border border-slate-300 bg-white text-slate-700 hover:border-brand-400 hover:text-brand-700 focus-visible:ring-brand-400',
-  ghost: 'text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 focus-visible:ring-slate-400',
+    'border border-slate-300 bg-white text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2',
+  ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
+  sm: 'rounded-lg px-3 py-2 text-sm',
+  md: 'rounded-xl px-4 py-2.5 text-sm',
 };
 
 export function Button({
@@ -31,7 +33,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     />
   );
@@ -128,6 +130,61 @@ export function Alert({ tone, children }: AlertProps) {
   return (
     <div className={`rounded-lg border px-4 py-3 text-sm ${alertTones[tone]}`} role="alert">
       {children}
+    </div>
+  );
+}
+
+export const inputClassName =
+  'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:bg-slate-50 disabled:text-slate-500';
+
+export function LoadingState({ label = 'Memuat data…' }: { label?: string }) {
+  return (
+    <div className="flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-6 py-12 text-sm text-slate-600">
+      <span
+        className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600"
+        aria-hidden="true"
+      />
+      {label}
+    </div>
+  );
+}
+
+export function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+      <p className="font-semibold text-slate-900">{title}</p>
+      {description ? <p className="mt-1 text-sm text-slate-600">{description}</p> : null}
+      {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
+    </div>
+  );
+}
+
+export function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-center">
+      <p className="font-semibold text-red-800">Gagal memuat data</p>
+      <p className="mt-1 text-sm text-red-700">{message}</p>
+      {onRetry ? (
+        <div className="mt-4 flex justify-center">
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            Coba lagi
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

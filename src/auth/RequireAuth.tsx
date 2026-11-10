@@ -16,7 +16,11 @@ export function AuthLoadingScreen() {
 }
 
 export function RequireAuth() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <AuthLoadingScreen />;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -26,10 +30,14 @@ export function RequireAuth() {
 }
 
 export function RequireStudent() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <AuthLoadingScreen />;
+  }
 
   if (!user) {
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   if (user.role !== 'student') {
@@ -40,10 +48,14 @@ export function RequireStudent() {
 }
 
 export function RequireLecturer() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <AuthLoadingScreen />;
+  }
 
   if (!user) {
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   if (user.role !== 'lecturer') {
