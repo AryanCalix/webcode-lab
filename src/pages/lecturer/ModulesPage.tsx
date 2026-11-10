@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ModuleLanguageIcon } from '../../components/ModuleThumbnail';
 import {
   Alert,
   Badge,
@@ -98,7 +99,7 @@ export default function ModulesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto w-full max-w-7xl">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Manajemen Modul</h1>
@@ -191,21 +192,24 @@ export default function ModulesPage() {
       ) : (
         <div className="grid gap-4">
           {modules.map((module) => (
-            <Card key={module.id} className="p-5">
+            <Card key={module.id} className="hover-lift p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-semibold text-slate-900">{module.title}</h2>
-                    <Badge tone={module.is_published ? 'green' : 'slate'}>
-                      {module.is_published ? 'Published' : 'Draft'}
-                    </Badge>
-                    <Badge tone="blue">Urutan {module.order_index}</Badge>
+                <div className="flex min-w-0 items-start gap-3">
+                  <ModuleLanguageIcon title={module.title} />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold text-slate-900">{module.title}</h2>
+                      <Badge tone={module.is_published ? 'green' : 'slate'}>
+                        {module.is_published ? 'Published' : 'Draft'}
+                      </Badge>
+                      <Badge tone="blue">Urutan {module.order_index}</Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-600">{module.description}</p>
+                    <p className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                      <BookOpen className="h-4 w-4" aria-hidden="true" />
+                      {module.lessonCount} pelajaran
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm text-slate-600">{module.description}</p>
-                  <p className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                    <BookOpen className="h-4 w-4" aria-hidden="true" />
-                    {module.lessonCount} pelajaran
-                  </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Link to={`/lecturer/modules/${module.id}`}>

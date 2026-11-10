@@ -44,10 +44,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-slate-100 px-4 py-10">
-      <div className="w-full max-w-md">
+    <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-cream-100 px-4 py-10">
+      <div aria-hidden="true" className="dot-grid pointer-events-none absolute inset-0 opacity-40" />
+      <div
+        aria-hidden="true"
+        className="animate-float-slow pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-brand-300/30 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="animate-float pointer-events-none absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-blue-300/30 blur-3xl"
+      />
+      <div className="animate-scale-in relative w-full max-w-md">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-sm">
+          <span className="animate-bob flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-900/20">
             <Code2 className="h-6 w-6" aria-hidden="true" />
           </span>
           <div>
@@ -58,7 +67,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur-sm">
           <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-4">
             {error ? <Alert tone="error">{error}</Alert> : null}
 

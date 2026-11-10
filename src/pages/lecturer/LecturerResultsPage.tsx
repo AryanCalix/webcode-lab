@@ -179,7 +179,7 @@ export default function LecturerResultsPage() {
       : 0;
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto w-full max-w-7xl">
       <PageHeader
         eyebrow="Penilaian"
         title="Hasil & Nilai"

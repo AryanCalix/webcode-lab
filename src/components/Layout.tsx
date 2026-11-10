@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   BookOpen,
   CalendarCheck,
@@ -46,8 +46,8 @@ function getNavItems(role: string | undefined): NavItem[] {
 
 function BrandMark() {
   return (
-    <Link to="/" className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-sm">
+    <Link to="/" className="group flex items-center gap-2.5 transition-transform duration-200 hover:scale-[1.03] active:scale-95">
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-sm transition-transform duration-300 group-hover:-rotate-6">
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path
             d="M8 6L3 12L8 18M16 6L21 12L16 18"
@@ -107,15 +107,22 @@ function SidebarNav({ items }: { items: NavItem[] }) {
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+              `nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
                 isActive
-                  ? 'bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-100'
-                  : 'text-slate-600 hover:bg-cream-50 hover:text-slate-900'
+                  ? 'nav-link-active bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-100'
+                  : 'text-slate-600 hover:translate-x-0.5 hover:bg-cream-50 hover:text-slate-900'
               }`
             }
           >
-            <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+            <Icon
+              className="h-4.5 w-4.5 transition-transform duration-200 group-hover:scale-110"
+              aria-hidden="true"
+            />
             {item.label}
+            <span
+              className="nav-dot ml-auto h-1.5 w-1.5 rounded-full bg-brand-500 opacity-0 transition-all duration-300"
+              aria-hidden="true"
+            />
           </NavLink>
         );
       })}
@@ -126,6 +133,7 @@ function SidebarNav({ items }: { items: NavItem[] }) {
 export function AppLayout({ children }: { children?: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const navItems = getNavItems(user?.role);
 
   const handleLogout = async () => {
@@ -141,12 +149,16 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         </div>
         <div className="flex-1 overflow-y-auto py-4">
           <SidebarNav items={navItems} />
-          <div className="mx-4 mt-6 rounded-xl bg-gradient-to-br from-brand-50 to-blue-50 p-3.5 ring-1 ring-brand-100">
-            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-brand-700">
+          <div className="relative mx-4 mt-6 overflow-hidden rounded-xl bg-gradient-to-br from-brand-50 to-blue-50 p-3.5 ring-1 ring-brand-100">
+            <span
+              aria-hidden="true"
+              className="animate-float-slow pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-brand-300/30 blur-2xl"
+            />
+            <p className="relative flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-brand-700">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               {user?.role === 'lecturer' ? 'Tips mengajar' : 'Tips belajar'}
             </p>
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+            <p className="relative mt-1.5 text-xs leading-relaxed text-slate-600">
               {user?.role === 'lecturer'
                 ? 'Cek progres mahasiswa dan tandai pengecualian absensi setiap selesai sesi.'
                 : 'Selesaikan satu tahap setiap hari agar streak dan progresmu tetap terjaga.'}
@@ -183,8 +195,10 @@ export function AppLayout({ children }: { children?: ReactNode }) {
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    `flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold ${
-                      isActive ? 'bg-brand-600 text-white' : 'bg-cream-100 text-slate-600'
+                    `flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all duration-200 ${
+                      isActive
+                        ? 'bg-brand-600 text-white shadow-sm'
+                        : 'bg-cream-100 text-slate-600 hover:bg-cream-200'
                     }`
                   }
                 >
@@ -195,7 +209,11 @@ export function AppLayout({ children }: { children?: ReactNode }) {
             })}
           </div>
         </nav>
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children ?? <Outlet />}</main>
+        <main className="flex-1 p-4 sm:p-5 lg:p-6">
+          <div key={location.pathname} className="page-enter">
+            {children ?? <Outlet />}
+          </div>
+        </main>
       </div>
     </div>
   );

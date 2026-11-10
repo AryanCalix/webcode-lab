@@ -88,7 +88,7 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto w-full max-w-7xl">
       <PageHeader
         eyebrow="Kelas Pemrograman Web"
         title="Mahasiswa"

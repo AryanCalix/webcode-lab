@@ -1,3 +1,6 @@
+import type { CSSProperties } from 'react';
+import { AnimatedNumber } from './AnimatedNumber';
+
 interface ProgressRingProps {
   value: number;
   size?: number;
@@ -5,6 +8,7 @@ interface ProgressRingProps {
   className?: string;
   labelClassName?: string;
   showLabel?: boolean;
+  strokeClassName?: string;
 }
 
 export function ProgressRing({
@@ -14,11 +18,18 @@ export function ProgressRing({
   className = '',
   labelClassName = '',
   showLabel = true,
+  strokeClassName = 'stroke-brand-500',
 }: ProgressRingProps) {
   const clamped = Math.max(0, Math.min(100, value));
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (clamped / 100) * circumference;
+  const ringStyle = {
+    strokeDasharray: circumference,
+    strokeDashoffset: offset,
+    '--ring-from': circumference,
+    '--ring-to': offset,
+  } as CSSProperties;
 
   return (
     <div
@@ -45,16 +56,15 @@ export function ProgressRing({
           fill="none"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="stroke-brand-500 transition-all duration-700"
+          style={ringStyle}
+          className={`ring-progress transition-all duration-700 ${strokeClassName}`}
         />
       </svg>
       {showLabel ? (
         <span
           className={`absolute text-sm font-bold text-slate-900 ${labelClassName}`}
         >
-          {clamped}%
+          <AnimatedNumber value={clamped} suffix="%" />
         </span>
       ) : null}
     </div>

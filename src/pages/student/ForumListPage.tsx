@@ -41,7 +41,7 @@ export default function ForumListPage() {
       ) : (
         <div className="grid gap-4">
           {threads.map((thread) => (
-            <Card key={thread.id} className="p-5">
+            <Card key={thread.id} className="hover-lift p-5">
               <Link to={`/student/forum/${thread.id}`} className="block">
                 <h2 className="text-lg font-semibold text-slate-900">{thread.title}</h2>
                 <p className="mt-1 line-clamp-2 whitespace-pre-line text-sm text-slate-600">

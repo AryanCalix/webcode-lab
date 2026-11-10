@@ -107,7 +107,7 @@ export default function LecturerDashboardPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto w-full max-w-7xl">
       <PageHeader
         eyebrow="Ruang dosen"
         title="Dashboard Dosen"
@@ -122,7 +122,7 @@ export default function LecturerDashboardPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="stagger-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Mahasiswa aktif"
           value={students.length}
@@ -160,14 +160,14 @@ export default function LecturerDashboardPage() {
             {modules.filter((module) => module.is_published).length} modul dipublikasikan
           </span>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="stagger-grid grid gap-4 sm:grid-cols-2">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
               <Link key={action.to} to={action.to} className="block">
-                <Card className="flex h-full items-center gap-4 p-5 transition-colors hover:border-brand-300">
+                <Card className="group hover-lift flex h-full items-center gap-4 p-5 hover:border-brand-300">
                   <span
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${action.accent}`}
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110 ${action.accent}`}
                   >
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>

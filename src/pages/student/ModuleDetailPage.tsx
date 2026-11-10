@@ -10,6 +10,7 @@ import {
   PencilLine,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
+import { ModuleLanguageIcon } from '../../components/ModuleThumbnail';
 import { ProgressRing } from '../../components/ProgressRing';
 import { Badge, Card, EmptyState, ErrorState, LoadingState, ProgressBar } from '../../components/ui';
 import { useModuleDetail } from '../../features/modules/hooks';
@@ -46,7 +47,7 @@ export default function ModuleDetailPage() {
   const assessmentLocked = !allLessonsComplete && lessons.length > 0;
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto w-full max-w-7xl">
       <Link
         to="/student/modules"
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900"
@@ -58,19 +59,25 @@ export default function ModuleDetailPage() {
       <Card className="overflow-hidden">
         <div className="hero-mesh p-6">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={isComplete ? 'green' : percent > 0 ? 'amber' : 'slate'}>
-                  {isComplete ? 'Modul selesai' : percent > 0 ? 'Sedang berjalan' : 'Belum dimulai'}
-                </Badge>
-                <Badge tone="blue">{lessons.length} pelajaran</Badge>
+            <div className="flex min-w-0 items-start gap-3">
+              <ModuleLanguageIcon
+                title={detail.module.title}
+                className="h-14 w-14 rounded-2xl shadow-md"
+              />
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={isComplete ? 'green' : percent > 0 ? 'amber' : 'slate'}>
+                    {isComplete ? 'Modul selesai' : percent > 0 ? 'Sedang berjalan' : 'Belum dimulai'}
+                  </Badge>
+                  <Badge tone="blue">{lessons.length} pelajaran</Badge>
+                </div>
+                <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                  {detail.module.title}
+                </h1>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
+                  {detail.module.description}
+                </p>
               </div>
-              <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                {detail.module.title}
-              </h1>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
-                {detail.module.description}
-              </p>
             </div>
             <ProgressRing value={percent} size={112} strokeWidth={10} />
           </div>

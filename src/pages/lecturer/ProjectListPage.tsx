@@ -69,7 +69,7 @@ export default function LecturerProjectListPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto w-full max-w-7xl">
       <PageHeader
         eyebrow="Proyek"
         title="Manajemen Proyek"
@@ -111,7 +111,7 @@ export default function LecturerProjectListPage() {
           {projects.map((project) => {
             const stats = submissionsByProject.get(project.id) ?? { total: 0, graded: 0 };
             return (
-              <Card key={project.id} className="p-5">
+              <Card key={project.id} className="hover-lift p-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">

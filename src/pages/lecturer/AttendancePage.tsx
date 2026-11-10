@@ -147,7 +147,7 @@ export default function LecturerAttendancePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto w-full max-w-7xl">
       <PageHeader
         eyebrow="Kehadiran"
         title="Absensi Kelas"
@@ -334,7 +334,7 @@ export default function LecturerAttendancePage() {
                 const stats = summariseAttendance(session.records, students.length);
                 const label = session.topic.trim() || 'Sesi kelas';
                 return (
-                  <Card key={session.id} className="p-4">
+                  <Card key={session.id} className="hover-lift p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-slate-900">{label}</p>

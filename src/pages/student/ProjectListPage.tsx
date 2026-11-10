@@ -30,7 +30,7 @@ export default function ProjectListPage() {
   const modules = new Map(modulesState.modules.map((module) => [module.id, module] as const));
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto w-full max-w-7xl">
       <PageHeader
         eyebrow="Tugas akhir modul"
         title="Proyek Mini"
@@ -51,7 +51,7 @@ export default function ProjectListPage() {
             const locked = Boolean(module && module.lessonCount > 0 && modulePercent < 100);
 
             return (
-              <Card key={project.id} className="overflow-hidden">
+              <Card key={project.id} className="hover-lift overflow-hidden">
                 <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">

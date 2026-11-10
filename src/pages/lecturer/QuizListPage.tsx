@@ -68,7 +68,7 @@ export default function LecturerQuizListPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto w-full max-w-7xl">
       <PageHeader
         eyebrow="Evaluasi modul"
         title="Manajemen Kuis"
@@ -110,7 +110,7 @@ export default function LecturerQuizListPage() {
         ) : (
           <div className="grid gap-4">
             {quizzes.map((quiz) => (
-              <Card key={quiz.id} className="p-5">
+              <Card key={quiz.id} className="hover-lift p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">

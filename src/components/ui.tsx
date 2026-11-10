@@ -11,11 +11,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2',
+    'bg-brand-600 text-white shadow-sm hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-md active:translate-y-0 active:bg-brand-800 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2',
   secondary:
-    'bg-slate-900 text-white shadow-sm hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2',
+    'bg-slate-900 text-white shadow-sm hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md active:translate-y-0 focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2',
   outline:
-    'border border-slate-300 bg-white text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2',
+    'border border-slate-300 bg-white text-slate-700 shadow-sm hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 hover:shadow-md active:translate-y-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2',
   ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2',
 };
 
@@ -34,7 +34,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm ${variant === 'primary' ? 'btn-shine' : ''} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     />
   );
@@ -47,7 +47,11 @@ interface CardProps {
 
 export function Card({ children, className = '' }: CardProps) {
   return (
-    <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>{children}</div>
+    <div
+      className={`rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md ${className}`}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -67,7 +71,7 @@ export function ProgressBar({ value, className = '' }: ProgressBarProps) {
       aria-valuemax={100}
     >
       <div
-        className="h-full rounded-full bg-brand-500 transition-all"
+        className="progress-fill h-full rounded-full bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600 shadow-[0_0_10px_rgba(249,115,22,0.35)] transition-all duration-700"
         style={{ width: `${clamped}%` }}
       />
     </div>
@@ -130,7 +134,7 @@ const alertTones: Record<AlertProps['tone'], string> = {
 
 export function Alert({ tone, children }: AlertProps) {
   return (
-    <div className={`rounded-lg border px-4 py-3 text-sm ${alertTones[tone]}`} role="alert">
+    <div className={`animate-fade-up rounded-lg border px-4 py-3 text-sm ${alertTones[tone]}`} role="alert">
       {children}
     </div>
   );
@@ -163,7 +167,7 @@ export function EmptyState({
   illustration?: 'modules' | 'attendance' | 'projects' | 'search';
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+    <div className="animate-scale-in rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
       <EmptyIllustration variant={illustration} />
       <p className="mt-5 font-semibold text-slate-900">{title}</p>
       {description ? (
@@ -175,7 +179,7 @@ export function EmptyState({
 }
 
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-slate-200/70 ${className}`} />;
+  return <div className={`skeleton rounded-xl bg-slate-200/60 ${className}`} />;
 }
 
 export function ErrorState({
@@ -186,7 +190,7 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-center">
+    <div className="animate-fade-up rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-center">
       <p className="font-semibold text-red-800">Gagal memuat data</p>
       <p className="mt-1 text-sm text-red-700">{message}</p>
       {onRetry ? (

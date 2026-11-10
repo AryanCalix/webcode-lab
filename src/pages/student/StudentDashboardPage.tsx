@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, Flame, Sparkles, Trophy, Zap } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
+import { ModuleLanguageIcon } from '../../components/ModuleThumbnail';
 import { PageHeader } from '../../components/PageHeader';
 import { ProgressRing } from '../../components/ProgressRing';
 import { StatCard } from '../../components/StatCard';
@@ -97,7 +98,7 @@ export default function StudentDashboardPage() {
   const week = buildStreakWeek(streak, gamification?.lastActivityDate);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto w-full max-w-7xl">
       <PageHeader
         eyebrow="Ruang belajar"
         title={`Halo, ${user?.full_name ?? 'Mahasiswa'}!`}
@@ -169,7 +170,7 @@ export default function StudentDashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+      <div className="stagger-grid mt-4 grid gap-4 sm:grid-cols-3">
         <StatCard
           label="Total XP"
           value={gamification?.totalXp ?? 0}
@@ -274,13 +275,16 @@ export default function StudentDashboardPage() {
               const percent = module.progress?.progress_percent ?? 0;
               const isComplete = percent >= 100;
               return (
-                <Card key={module.id} className="flex flex-col p-5">
+                <Card key={module.id} className="hover-lift flex flex-col p-5">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="truncate font-semibold text-slate-900">{module.title}</h3>
-                      <p className="mt-1 line-clamp-2 text-sm text-slate-600">
-                        {module.description}
-                      </p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      <ModuleLanguageIcon title={module.title} />
+                      <div className="min-w-0">
+                        <h3 className="truncate font-semibold text-slate-900">{module.title}</h3>
+                        <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+                          {module.description}
+                        </p>
+                      </div>
                     </div>
                     <Badge tone={isComplete ? 'green' : percent > 0 ? 'amber' : 'slate'}>
                       {isComplete ? 'Selesai' : percent > 0 ? 'Berjalan' : 'Baru'}

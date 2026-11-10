@@ -12,10 +12,11 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="animate-fade-up mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         {eyebrow ? (
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-600">
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-brand-600">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" aria-hidden="true" />
             {eyebrow}
           </p>
         ) : null}

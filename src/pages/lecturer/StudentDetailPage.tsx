@@ -91,7 +91,7 @@ export default function LecturerStudentDetailPage() {
     .slice(0, 5);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto w-full max-w-7xl">
       <Link
         to="/lecturer/students"
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900"

@@ -17,7 +17,7 @@ export default function StudentAttendancePage() {
   if (error) return <ErrorState message={getErrorMessage(error)} onRetry={refetch} />;
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto w-full max-w-7xl">
       <PageHeader
         eyebrow="Kehadiran"
         title="Absensi Kelas"
