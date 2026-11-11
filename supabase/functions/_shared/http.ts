@@ -15,7 +15,7 @@ function allowedOrigins(): string[] {
 export function corsHeaders(request: Request): HeadersInit {
   const origin = request.headers.get('Origin');
   const allowList = allowedOrigins();
-  const allowed = origin && (allowList.includes('*') || allowList.includes(origin)) ? origin : allowList[0];
+  const allowed = origin && isAllowedOrigin(origin, allowList) ? origin : allowList[0];
 
   return {
     'Access-Control-Allow-Origin': allowed ?? DEFAULT_ALLOWED_ORIGINS[0],
@@ -24,6 +24,22 @@ export function corsHeaders(request: Request): HeadersInit {
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
+}
+
+function isAllowedOrigin(origin: string, allowList: string[]): boolean {
+  if (allowList.includes('*') || allowList.includes(origin)) return true;
+
+  // Allow Vercel production and preview deployments without hardcoding every
+  // generated URL. Authorization still relies on Supabase JWTs.
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === 'https:' &&
+      (url.hostname === 'vercel.app' || url.hostname.endsWith('.vercel.app'))
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function jsonResponse(

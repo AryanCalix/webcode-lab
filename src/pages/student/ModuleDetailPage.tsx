@@ -29,6 +29,7 @@ export default function ModuleDetailPage() {
   const percent = detail.progress?.progress_percent ?? 0;
   const isComplete = percent >= 100;
   const lessons = detail.lessons;
+  const materials = lessons.filter((lesson) => lesson.kind === 'material');
   const firstIncompleteIndex = lessons.findIndex(
     (lesson) => !detail.completedLessonIds.has(lesson.id),
   );
@@ -117,6 +118,66 @@ export default function ModuleDetailPage() {
       </Card>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.45fr_0.85fr]">
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">Daftar materi</h2>
+            <span className="text-xs font-medium text-slate-500">{materials.length} materi</span>
+          </div>
+          <Card className="p-5">
+            {materials.length === 0 ? (
+              <p className="text-sm text-slate-500">Belum ada materi untuk modul ini.</p>
+            ) : (
+              <ol className="relative space-y-1">
+                {materials.map((lesson) => {
+                  const lessonIndex = lessons.findIndex((item) => item.id === lesson.id);
+                  const unlocked = lessons
+                    .slice(0, lessonIndex)
+                    .every((item) => detail.completedLessonIds.has(item.id));
+                  const href = `/student/modules/${detail.module.id}/lessons/${lesson.id}`;
+
+                  const content = (
+                    <div
+                      className={`flex items-start gap-3 rounded-xl p-3 transition-colors ${
+                        unlocked ? 'hover:bg-cream-50' : 'opacity-60'
+                      }`}
+                    >
+                      <span
+                        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                          unlocked ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-400'
+                        }`}
+                      >
+                        {lessonIndex + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {lesson.title}
+                        </p>
+                        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                          <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+                          Materi teks
+                        </p>
+                      </div>
+                      <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                    </div>
+                  );
+
+                  return (
+                    <li key={lesson.id}>
+                      {unlocked ? (
+                        <Link to={href} className="block focus-visible:outline-none">
+                          {content}
+                        </Link>
+                      ) : (
+                        <div aria-disabled="true">{content}</div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </Card>
+        </section>
+
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">Jalur belajar</h2>

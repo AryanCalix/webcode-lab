@@ -2,9 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { dashboardKeys } from '../dashboard/hooks';
 import { moduleKeys } from '../modules/hooks';
 import {
+  requestAiChat,
   requestAiExplanation,
   requestAiHint,
   submitExercise,
+  type AiChatMessage,
   type ExerciseSubmissionResult,
 } from './api';
 
@@ -56,6 +58,19 @@ export function useRequestAiExplanation(exerciseId: string | undefined) {
     mutationFn: (input: { html: string; css: string; js: string; errorMessage: string }) => {
       if (!exerciseId) throw new Error('Latihan tidak ditemukan.');
       return requestAiExplanation({ exerciseId, ...input });
+    },
+  });
+}
+
+export function useRequestAiChat() {
+  return useMutation({
+    mutationFn: (input: {
+      exerciseId: string;
+      messages: AiChatMessage[];
+      code: { html: string; css: string; js: string };
+    }) => {
+      if (!input.exerciseId) throw new Error('Latihan tidak ditemukan.');
+      return requestAiChat(input);
     },
   });
 }

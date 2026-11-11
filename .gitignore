@@ -17,6 +17,8 @@ dist-ssr
 .env.*
 !.env.example
 !.env.seed.example
+# Publishable frontend values for Vercel builds (anon key is safe in the browser).
+!.env.production
 
 
 # Editor directories and files

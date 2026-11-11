@@ -18,6 +18,16 @@ export interface AiExplanationResult {
   source: 'ai' | 'fallback';
 }
 
+export interface AiChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface AiChatResult {
+  reply: string;
+  source: 'ai' | 'fallback';
+}
+
 export function submitExercise(input: {
   exerciseId: string;
   html: string;
@@ -45,4 +55,16 @@ export function requestAiExplanation(input: {
   errorMessage: string;
 }): Promise<AiExplanationResult> {
   return invokeFunction<AiExplanationResult>('ai-error-explanation', input);
+}
+
+export function requestAiChat(input: {
+  exerciseId: string;
+  messages: AiChatMessage[];
+  code: { html: string; css: string; js: string };
+}): Promise<AiChatResult> {
+  return invokeFunction<AiChatResult>('ai-chat', {
+    exerciseId: input.exerciseId,
+    code: input.code,
+    messages: input.messages,
+  });
 }

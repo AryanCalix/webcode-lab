@@ -7,12 +7,17 @@ test('halaman login menampilkan judul aplikasi', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'WebCode Lab', exact: true })).toBeVisible();
   await expect(page.getByLabel('Email')).toBeVisible();
   await expect(page.getByLabel('Password')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Masuk', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mahasiswa', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Dosen', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Daftar sebagai dosen' })).toHaveCount(0);
 });
 
 test('demo mahasiswa dapat membuka modul belajar', async ({ page }) => {
   await page.goto('/login');
 
-  await page.getByRole('button', { name: 'Mahasiswa', exact: true }).click();
+  await page.getByLabel('Email').fill('budi@webcode.lab');
+  await page.getByLabel('Password').fill('budi1234');
   await page.getByRole('button', { name: 'Masuk', exact: true }).click();
 
   await expect(page.getByRole('heading', { name: /Halo,/ })).toBeVisible({ timeout: 30_000 });

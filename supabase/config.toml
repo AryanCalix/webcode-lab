@@ -437,3 +437,6 @@ verify_jwt = true
 
 [functions.ai-error-explanation]
 verify_jwt = true
+
+[functions.ai-chat]
+verify_jwt = true

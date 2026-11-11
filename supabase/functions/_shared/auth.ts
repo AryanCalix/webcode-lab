@@ -23,7 +23,6 @@ export async function authenticate(request: Request): Promise<AuthenticatedReque
 
   const url = requireEnv('SUPABASE_URL');
   const anonKey = requireEnv('SUPABASE_ANON_KEY');
-  const serviceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
 
   const supabase = createClient(url, anonKey, {
     global: { headers: { Authorization: authorization } },
@@ -39,11 +38,17 @@ export async function authenticate(request: Request): Promise<AuthenticatedReque
     throw new HttpError(401, 'Sesi tidak valid atau sudah kedaluwarsa.');
   }
 
-  const admin = createClient(url, serviceKey, {
+  return { user, supabase, admin: createServiceClient() };
+}
+
+/** Service-role client for endpoints without a caller session (e.g. registration). */
+export function createServiceClient(): SupabaseClient {
+  const url = requireEnv('SUPABASE_URL');
+  const serviceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
+
+  return createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-
-  return { user, supabase, admin };
 }
 
 export async function enforceRateLimit(

@@ -1,9 +1,9 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-export function Markdown({ children }: { children: string }) {
+export function Markdown({ children, className = '' }: { children: string; className?: string }) {
   return (
-    <div className="markdown-body">
+    <div className={`markdown-body ${className}`.trim()}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
     </div>
   );

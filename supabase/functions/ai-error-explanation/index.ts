@@ -1,6 +1,6 @@
 import { z } from 'npm:zod@4';
 import { authenticate, enforceRateLimit } from '../_shared/auth.ts';
-import { askClaude } from '../_shared/anthropic.ts';
+import { askAI } from '../_shared/anthropic.ts';
 import { errorResponse, handleOptions, HttpError, jsonResponse, readJson } from '../_shared/http.ts';
 
 const bodySchema = z.object({
@@ -52,9 +52,9 @@ Deno.serve(async (request) => {
     let explanation = fallback;
     let source: 'ai' | 'fallback' = 'fallback';
 
-    if (Deno.env.get('ANTHROPIC_API_KEY')) {
+    if (Deno.env.get('GEMINI_API_KEY') || Deno.env.get('ANTHROPIC_API_KEY')) {
       try {
-        explanation = await askClaude(
+        explanation = await askAI(
           SYSTEM_PROMPT,
           [
             `Judul latihan: ${exercise.title}`,

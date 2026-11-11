@@ -14,6 +14,7 @@ import {
 import '../../lib/monaco';
 import { useAuth } from '../../auth/AuthContext';
 import { Alert, Badge, Button, Card, ErrorState, LoadingState } from '../../components/ui';
+import { AIChat } from '../../components/AIChat';
 import { useRequestAiExplanation, useRequestAiHint, useSubmitExercise } from '../../features/exercises/hooks';
 import { useExerciseDetail, useLessonDetail, useModuleDetail } from '../../features/modules/hooks';
 import type { ExerciseRow, ExerciseSubmissionRow } from '../../lib/database.types';
@@ -147,6 +148,7 @@ function Playground({
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
+      <AIChat exerciseId={exercise.id} code={code} />
       <div>
         <Link
           to={moduleId ? `/student/modules/${moduleId}` : '/student/modules'}
