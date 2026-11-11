@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["WebCode-Lab-OpenCode-Context.md"],
+  "watcher": {
+    "ignore": ["dist/**", "test-results/**", "node_modules/**"]
+  },
+  "permissions": [
+    { "action": "shell", "resource": "*--force*", "effect": "ask" },
+    { "action": "shell", "resource": "*supabase db reset*", "effect": "ask" },
+    { "action": "shell", "resource": "*supabase db push*", "effect": "ask" },
+    { "action": "shell", "resource": "*supabase functions delete*", "effect": "ask" },
+    { "action": "shell", "resource": "*rm -rf*", "effect": "ask" }
+  ]
+}

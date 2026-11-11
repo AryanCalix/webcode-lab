@@ -73,6 +73,28 @@ npx supabase secrets set ALLOWED_ORIGINS=http://localhost:5173
 
 > Akun dosen dibuat oleh operator melalui `npm run create:lecturer` atau Supabase Dashboard. Tidak ada pendaftaran dosen publik.
 
+## Kolaborasi dengan OpenCode
+
+Repo ini sudah dilengkapi konfigurasi OpenCode agar semua kontributor mendapat panduan yang sama:
+
+- `AGENTS.md` — perintah, arsitektur, konvensi, dan aturan keamanan.
+- `opencode.jsonc` — memuat `WebCode-Lab-OpenCode-Context.md` sebagai instruksi tambahan.
+- `.opencode/commands/verify.md` — command `/verify`.
+- `.opencode/skills/webcode-lab/SKILL.md` — workflow proyek.
+- `.opencode/agents/reviewer.md` — subagent review read-only.
+
+Mulai dari clone:
+
+```bash
+git clone -b temp https://github.com/AryanCalix/webcode-lab.git
+cd webcode-lab
+cp .env.production .env.local
+npm install
+opencode
+```
+
+Jangan membagikan `.env.seed`, service role key, access token Supabase, atau API key model. Setiap kontributor memakai akun OpenCode dan kredensial model miliknya sendiri.
+
 ## Deploy ke Vercel
 
 Import repo di Vercel, lalu klik **Deploy** tanpa konfigurasi tambahan:
