@@ -24,6 +24,17 @@ Aplikasi ini dibangun berdasarkan dokumen konteks produk **WebCode Lab — Ranca
 - **Gamifikasi**: XP / level / streak / badge melalui RPC keamanan `SECURITY DEFINER`.
 - **Dashboard dosen**: ringkasan mahasiswa, modul, hasil kuis & pengumpulan proyek.
 
+### Blok visual materi
+
+Materi pelajaran ditulis dengan Markdown dan mendukung blok visual berikut:
+
+- `:::flow Judul` … `:::` — alur langkah bernomor.
+- `:::compare Judul` … `:::` — kartu perbandingan.
+- `:::preview Judul` … `---css---` … `---js---` … `:::` — preview HTML/CSS/JS di iframe sandbox.
+- `:::note`, `:::tip`, `:::warning`, `:::key` — kotak catatan, tips, peringatan, dan poin kunci.
+
+Contoh seed materi ada di `supabase/migrations/20261125*_expand_*_content.sql`.
+
 ## Struktur Penting
 
 ```

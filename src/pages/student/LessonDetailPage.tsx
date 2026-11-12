@@ -179,6 +179,22 @@ export default function LessonDetailPage() {
                 <p className="text-sm text-slate-500">Materi belum memiliki konten.</p>
               )}
 
+              {exercise ? (
+                <div className="mt-6 rounded-2xl border border-brand-200 bg-brand-50/70 p-4">
+                  <p className="text-sm font-semibold text-brand-900">Latihan untuk materi ini</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                    Uji pemahamanmu dengan menulis HTML, CSS, atau JavaScript di playground.
+                  </p>
+                  <Link
+                    to={`/student/playground/${exercise.id}`}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+                  >
+                    Buka latihan
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </div>
+              ) : null}
+
               {completeLesson.error ? (
                 <div className="mt-5">
                   <Alert tone="error">{getErrorMessage(completeLesson.error)}</Alert>
